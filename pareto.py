@@ -5,36 +5,46 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 from ortools.sat.python import cp_model
 from model import build_model
 
-def generate_pareto_front(max_solutions=8, time_limit=45):
-    solutions = []
-    seen = set()
-    
 def generate_pareto_front(time_limit=30):
     solutions = []
     seen = set()
     
     print("============================================================")
-    print("  PARETO FRONT GENERATION (Weighted Sum Method)")
+    print("  PARETO FRONT GENERATION (3D Rotating Epsilon-Constraint)")
     print("============================================================")
-    print(f"{'Weight':<10} | {'Fac':<5} | {'Stu':<5} | {'Res':<5} | {'Tot':<5} | {'Time(s)':<8} | {'Status'}")
-    print("-" * 65)
+    print(f"{'Run Type':<15} | {'Fac':<5} | {'Stu':<5} | {'Res':<5} | {'Tot':<5} | {'Time(s)':<8} | {'Status'}")
+    print("-" * 70)
     
-    weights = [
-        (100, 1),
-        (10, 1),
-        (3, 1),
-        (1, 1),
-        (1, 3),
-        (1, 10),
-        (1, 100)
-    ]
-    
-    for w_fac, w_stu in weights:
+    runs = []
+    # Set 1: minimize faculty, bound student
+    for e_stu in [250, 220, 210, 200]:
+        runs.append(('Min Fac', e_stu, None))
+    # Set 2: minimize student, bound faculty
+    for e_fac in [90, 100, 115, 130]:
+        runs.append(('Min Stu', None, e_fac))
+    # Set 3: minimize resource, bound both
+    for e_fac in [100, 115, 130]:
+        runs.append(('Min Res', 220, e_fac))
+        
+    for run_type, e_stu, e_fac in runs:
         model, vars_dict = build_model()
         
-        # Weighted objective
-        model.Minimize(w_fac * vars_dict['faculty_score'] + w_stu * vars_dict['student_score'])
-        
+        # Apply epsilon bounds based on run type
+        run_desc = run_type
+        if run_type == 'Min Fac':
+            model.Add(vars_dict['student_score'] <= e_stu)
+            model.Minimize(vars_dict['faculty_score'])
+            run_desc = f"Min Fac (S<={e_stu})"
+        elif run_type == 'Min Stu':
+            model.Add(vars_dict['faculty_score'] <= e_fac)
+            model.Minimize(vars_dict['student_score'])
+            run_desc = f"Min Stu (F<={e_fac})"
+        elif run_type == 'Min Res':
+            model.Add(vars_dict['faculty_score'] <= e_fac)
+            model.Add(vars_dict['student_score'] <= e_stu)
+            model.Minimize(vars_dict['resource_score'])
+            run_desc = f"Min Res (F<={e_fac})"
+            
         solver = cp_model.CpSolver()
         solver.parameters.num_search_workers = 8
         solver.parameters.max_time_in_seconds = time_limit
@@ -49,9 +59,9 @@ def generate_pareto_front(time_limit=30):
             fac = solver.Value(vars_dict['faculty_score'])
             stu = solver.Value(vars_dict['student_score'])
             res = solver.Value(vars_dict['resource_score'])
-            tot = fac + stu
+            tot = fac + stu + res
             
-            sig = (fac, stu)
+            sig = (fac, stu, res)
             if sig not in seen:
                 seen.add(sig)
                 
@@ -69,23 +79,19 @@ def generate_pareto_front(time_limit=30):
                     "timetable_data": timetable_data
                 }
                 solutions.append(solution)
-                weight_str = f"{w_fac}:{w_stu}"
-                print(f"{weight_str:<10} | {fac:<5} | {stu:<5} | {res:<5} | {tot:<5} | {wall_time:<8.2f} | {status_name}")
+                print(f"{run_desc:<15} | {fac:<5} | {stu:<5} | {res:<5} | {tot:<5} | {wall_time:<8.2f} | {status_name}")
             else:
-                weight_str = f"{w_fac}:{w_stu}"
-                print(f"{weight_str:<10} | {fac:<5} | {stu:<5} | {res:<5} | {tot:<5} | {wall_time:<8.2f} | {status_name} (Duplicate)")
+                print(f"{run_desc:<15} | {fac:<5} | {stu:<5} | {res:<5} | {tot:<5} | {wall_time:<8.2f} | {status_name} (Duplicate)")
         else:
-            weight_str = f"{w_fac}:{w_stu}"
-            print(f"{weight_str:<10} | ---   | ---   | ---   | ---   | {wall_time:<8.2f} | {status_name}")
+            print(f"{run_desc:<15} | ---   | ---   | ---   | ---   | {wall_time:<8.2f} | {status_name}")
                 
     print("============================================================")
-    print(f"  Found {len(solutions)} Pareto-optimal solutions.")
+    print(f"  Found {len(solutions)} unique Pareto-optimal solutions.")
     
     # Save solutions for server
     import json
     with open("webapp/pareto_solutions.json", "w") as f:
         json.dump(solutions, f, indent=4)
-
 
 if __name__ == '__main__':
     generate_pareto_front()
