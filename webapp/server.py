@@ -8,16 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import copy
 
-from data import (
-    DAYS, SLOT_NAMES, ACADEMIC_SLOTS, LAB_START_SLOTS,
-    NUM_DAYS, NUM_SLOTS,
-    DIVISIONS, NUM_DIVS, BATCHES, NUM_BATCHES, DIV_TO_BATCHES,
-    CLASSROOMS, LABS_LIST, NUM_LABS,
-    THEORY_SUBJ, NUM_THEORY_SUBJ,
-    LAB_SUBJ, NUM_LAB_SUBJ, WE_LAB_IDX, CMPM_LAB_IDX,
-    MIN_HOURS_PER_DAY, MAX_HOURS_PER_DAY,
-    ALL_TEACHERS, THEORY_LAB_PAIRS
-)
+from data import DataBundle
 from model import build_model
 from solver import solve_and_report, check_hard_violations
 from ortools.sat.python import cp_model
@@ -37,36 +28,37 @@ schedule_data = {
 def run_solver():
     global schedule_data
     print("Running solver before starting web server...")
-    model, vars_dict = build_model()
-    solver, status, _ = solve_and_report(model, vars_dict)
-    
+    data = DataBundle.default()
+    model, vars_dict = build_model(data)
+    solver, status, _ = solve_and_report(model, vars_dict, data)
+
     status_name = solver.StatusName(status)
     if status not in (cp_model.FEASIBLE, cp_model.OPTIMAL):
         print("Solver failed to find a solution.")
         schedule_data["stats"] = {"status": status_name, "error": "No solution"}
         return
-        
+
     tv = vars_dict['tv']
     oe1 = vars_dict['oe1']
     oe2 = vars_dict['oe2']
     lv = vars_dict['lv']
     lr = vars_dict['lr']
     div_day_hours = vars_dict['div_day_hours']
-    
-    violations = check_hard_violations(solver, tv, oe1, oe2, lv, lr, div_day_hours)
-    
+
+    violations = check_hard_violations(solver, tv, oe1, oe2, lv, lr, div_day_hours, data)
+
     schedule_data["stats"] = {
         "status": status_name,
         "wall_time": round(solver.WallTime(), 2),
         "penalty": int(solver.ObjectiveValue()),
         "hard_violations": len(violations)
     }
-    
-    oe1_day = next((d for d in range(NUM_DAYS) if solver.Value(oe1[d])), None)
-    oe2_day = next((d for d in range(NUM_DAYS) if solver.Value(oe2[d])), None)
-    
+
+    oe1_day = next((d for d in range(data.NUM_DAYS) if solver.Value(oe1[d])), None)
+    oe2_day = next((d for d in range(data.NUM_DAYS) if solver.Value(oe2[d])), None)
+
     from extract_schedule import extract_schedule
-    extracted = extract_schedule(solver, vars_dict)
+    extracted = extract_schedule(solver, vars_dict, data)
     
     schedule_data["divisions"] = extracted["divisions"]
     schedule_data["teachers"] = extracted["teachers"]
