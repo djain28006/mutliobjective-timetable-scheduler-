@@ -3,15 +3,18 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from ortools.sat.python import cp_model
+from data import DataBundle
 from model import build_model
 
 def run_diagnostic():
     print("============================================================")
     print("  DIAGNOSTIC RUN: Epsilon-Constraint Bounds Test")
     print("============================================================")
-    
+
+    data = DataBundle.default()
+
     # Set 1: Minimize Faculty, bound Student <= 250
-    model1, vars1 = build_model()
+    model1, vars1 = build_model(data)
     model1.Add(vars1['student_score'] <= 250)
     model1.Minimize(vars1['faculty_score'])
     solver1 = cp_model.CpSolver()
@@ -24,7 +27,7 @@ def run_diagnostic():
         print(f"Set 1: INFEASIBLE")
 
     # Set 2: Minimize Student, bound Faculty <= 130
-    model2, vars2 = build_model()
+    model2, vars2 = build_model(data)
     model2.Add(vars2['faculty_score'] <= 130)
     model2.Minimize(vars2['student_score'])
     solver2 = cp_model.CpSolver()
@@ -37,7 +40,7 @@ def run_diagnostic():
         print(f"Set 2: INFEASIBLE")
 
     # Set 3: Minimize Resource, bound Faculty <= 130, Student <= 220
-    model3, vars3 = build_model()
+    model3, vars3 = build_model(data)
     model3.Add(vars3['faculty_score'] <= 130)
     model3.Add(vars3['student_score'] <= 220)
     model3.Minimize(vars3['resource_score'])
