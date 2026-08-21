@@ -253,6 +253,43 @@ function renderSummary(run) {
   $("statSoft").textContent = typeof run.soft === "number" ? run.soft.toFixed(1) : run.soft;
   // wall_clock is the solver's total solve time (pipeline total, or the single solver's own).
   $("statWall").textContent = typeof run.wall_clock === "number" ? run.wall_clock.toFixed(1) + "s" : "—";
+  renderSolveWarning(run);
+}
+
+// An infeasible solve reports status "done" with soft cost 0.0 -- which reads like a perfect
+// result when it actually means NOTHING was scheduled and there is no timetable at all. Detect
+// that case (no grid content, or every session unplaced) and say so plainly, so a failure is
+// never mistaken for a success.
+function renderSolveWarning(run) {
+  const box = $("solveWarning");
+  if (!box) return;
+  // grids shape (engine/view.py solution_to_grids): divisions[].cells is an OBJECT keyed
+  // "<day>_<period>" -> [session, ...], not an array -- count the placed sessions across it.
+  const placed = (run.grids && Array.isArray(run.grids.divisions))
+    ? run.grids.divisions.reduce(
+        (n, d) => n + Object.values(d.cells || {}).reduce((m, arr) => m + (arr ? arr.length : 0), 0), 0)
+    : null;
+  const nothingPlaced = placed === 0;
+
+  if (nothingPlaced) {
+    box.style.display = "";
+    box.className = "readiness-banner not-ready";
+    box.innerHTML =
+      "<b>No timetable was produced.</b> The solver proved these constraints cannot all be " +
+      "satisfied at once, so nothing was scheduled &mdash; the soft cost of 0.0 reflects an " +
+      "empty timetable, not a good one. Common causes: a practical whose two batch-halves share " +
+      "one teacher (they run simultaneously in different labs), a division needing a lab on " +
+      "every teaching day but having fewer labs than days, or weekly hours outside the 6&ndash;8h " +
+      "per day window.";
+  } else if (run.hard > 0) {
+    box.style.display = "";
+    box.className = "readiness-banner not-ready";
+    box.innerHTML =
+      `<b>Partial timetable.</b> ${run.hard} hard constraint violation(s) remain &mdash; this ` +
+      "schedule is not usable as-is. Try a longer time limit, or the hybrid pipeline.";
+  } else {
+    box.style.display = "none";
+  }
 }
 
 function renderStages(stages) {

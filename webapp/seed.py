@@ -122,6 +122,7 @@ def _seed_dataset(session: Session, data: dict, branch_code: str, force: bool) -
         code=branch_code,
         name=data.get("institution", branch_code),
         semester_label=data.get("class_term", ""),
+        relaxed_days=list(data.get("relaxed_days", [])),
     )
     session.add(branch)
     session.flush()

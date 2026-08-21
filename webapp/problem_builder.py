@@ -17,7 +17,7 @@ from sqlmodel import Session, select
 
 from engine.io_json import problem_from_dict
 from engine.models import ProblemInstance
-from webapp.models_db import Allocation, Course, Division, Faculty, Room, SlotTemplate
+from webapp.models_db import Allocation, Branch, Course, Division, Faculty, Room, SlotTemplate
 
 
 def _faculty_by_course_value(alloc: Allocation, faculty_code_by_id: dict[int, str]):
@@ -128,6 +128,15 @@ def build_problem_dict(session: Session, branch_ids: list[int] | None = None) ->
             "batches": [d.batch1_name or f"{d.name}1", d.batch2_name or f"{d.name}2"],
         })
 
+    # Non-teaching weekdays declared by the included branches (e.g. Final Year's Friday is
+    # Final Project / Research Work). Unioned across branches: a day only needs exempting for
+    # the branch that declares it, and a branch that teaches normally that day is unaffected by
+    # the exemption (relaxing a day only removes constraints, never adds any).
+    branch_stmt = select(Branch)
+    if branch_ids is not None:
+        branch_stmt = branch_stmt.where(Branch.id.in_(branch_ids))
+    relaxed_days = sorted({d for b in session.exec(branch_stmt).all() for d in (b.relaxed_days or [])})
+
     return {
         "time_slots": time_slots,
         "rooms": rooms,
@@ -137,6 +146,7 @@ def build_problem_dict(session: Session, branch_ids: list[int] | None = None) ->
         "days_per_week": days_per_week,
         "protected_notes": [],
         "special_sessions": [],
+        "relaxed_days": relaxed_days,
     }
 
 

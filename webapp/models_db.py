@@ -28,6 +28,11 @@ class BranchBase(SQLModel):
 
 class Branch(BranchBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    # Weekdays (0=Mon..4=Fri) this branch does not run normal teaching on -- e.g. Final Year
+    # reserves Friday for Final Project / Research Work. Exempts the day from the day-shaped
+    # hard rules (labs-every-day, 6-8h daily load) instead of pretending it is a teaching day,
+    # which would make such a branch unsolvable. Fed to ProblemInstance.relaxed_days.
+    relaxed_days: list[int] = Field(default_factory=list, sa_column=Column(JSON))
 
 
 class BranchCreate(BranchBase):
