@@ -34,9 +34,12 @@ REFERENCE_DIR = Path(__file__).resolve().parent.parent / "data" / "reference"
 # name -> (dataset filename stem, branch code). The original single-branch bootstrap stays at its
 # original URL for backward compatibility; every other year/program gets its own dataset name.
 KNOWN_DATASETS: dict[str, tuple[str, str]] = {
-    "reference": ("djsce_cse_ds_sy_sem4", "CSE-DS-SY"),
-    "ty-sem5": ("djsce_ty_d1_sem5_jul_dec_2026", "CSE-DS-TY"),
-    "btech-sem7": ("djsce_btech_d2_sem7_jul_dec_2026", "CSE-DS-BTECH"),
+    # Jan-May 2026 (even semester) -- the original DJSCE reference dataset
+    "reference": ("djsce_cse_ds_sy_sem4", "CSE-DS-SY-SEM4"),
+    # July-Dec 2026 (odd semester) -- 2nd/3rd/final year, transcribed from photographed sheets
+    "sy-sem3": ("djsce_sy_sem3_jul_dec_2026", "CSE-DS-SY-SEM3"),
+    "ty-sem5": ("djsce_ty_d1_sem5_jul_dec_2026", "CSE-DS-TY-SEM5"),
+    "btech-sem7": ("djsce_btech_d2_sem7_jul_dec_2026", "CSE-DS-BTECH-SEM7"),
 }
 
 
