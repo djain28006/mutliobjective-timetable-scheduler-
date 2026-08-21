@@ -2,6 +2,11 @@
   "_transcription_note": "Transcribed by reading a photographed DJSCE CSE-DS timetable directly. The photo captured only Division D3's grid plus the subject/room/faculty legend -- its header row (Class/Semester/W.E.F.) was on a preceding page not photographed -- so the class/semester is DEDUCED, not read: (1) the sheet lists 'Innovative Product Development I' where the TY Sem V sheet lists IPD III, and IPD numbering tracks year progression; (2) July-December is an odd semester (I/III/V/VII) and Sem V + Sem VII are already accounted for by the other two photographed sheets; (3) there is no Physics/Chemistry/Engineering-Maths content, ruling out FY Sem I; (4) the subject mix (CSF, DBS, DSL-Python, MIS, PAIE) is a coherent predecessor to the SY Sem IV reference dataset's DS/ML-I/SDS. Hence SY (2nd year), Semester III. D1/D2 are copies of the photographed D3's subject list with the same faculty -- all divisions of a year share the subject list (user-confirmed); per-division faculty is editable on the dashboard. Weekly counts (MIS/UHV/PAIE/OE) were bumped up from the initial transcription, which summed to 28h/week -- below the hard 5x6h floor, unconditionally infeasible -- to 32h/week.",
   "institution": "Dwarkadas J. Sanghvi College of Engineering (DJSCE), Dept. of CSE (Data Science)",
   "class_term": "SY, Semester III, Divisions D1/D2/D3, academic term July-December 2026",
+  "department": "CSE-DS",
+  "department_name": "Computer Science & Engineering (Data Science)",
+  "year_label": "SY",
+  "year_name": "Second Year",
+  "semester": 3,
   "days_per_week": 5,
   "protected_notes": [
     "Monday morning is reserved for Community Engagement Service; Tuesday morning for Innovative Product Development (IPD I) / Research / Project Work.",

@@ -2,6 +2,11 @@
   "_transcription_note": "Transcribed by reading the photographed DJSCE CSE-DS TY (D1) Sem V timetable directly (manual read, term July-December 2026). Following the same methodology as djsce_cse_ds_sy_sem4.json: this captures the underlying entities (subjects, weekly session counts, faculty, rooms, batch structure) as a structural reference, not a verbatim cell-by-cell reproduction. Three labs (ADJ, ADB, DOPS) are printed as batches combined ACROSS D1+D2+D2/D3 (e.g. 'B1 (D1+D2)') -- the engine's Division model only supports a two-batch split WITHIN one division, so these are simplified here to D1's own two batches. Weekly theory counts for SNA/CCN/EM were trimmed by 1 session each from the initial transcription (which summed to exactly 40h/week -- the hard 5x8h ceiling with zero slack, verified infeasible: the greedy solver couldn't even seed a full assignment) down to 37h/week, giving the solver real room; verify against the source photo before treating as authoritative.",
   "institution": "Dwarkadas J. Sanghvi College of Engineering (DJSCE), Dept. of CSE (Data Science)",
   "class_term": "TY, Semester V, Divisions D1/D2/D3, academic term July-December 2026 (D2/D3 faculty placeholder-copied from D1's photographed timetable -- only D1 was photographed; divisions share the same subject list per class, confirmed by the user)",
+  "department": "CSE-DS",
+  "department_name": "Computer Science & Engineering (Data Science)",
+  "year_label": "TY",
+  "year_name": "Third Year",
+  "semester": 5,
   "days_per_week": 5,
   "protected_notes": [
     "Wednesday period 1-2 is reserved for Innovative Product Development (IPD III) / Research / Project Work.",

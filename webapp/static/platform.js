@@ -22,7 +22,11 @@ let compareActiveDivision = 0;     // division tab index within the active solve
 
 $("seedBtn").addEventListener("click", loadSeed);
 $("branchRefreshBtn").addEventListener("click", () => loadBranches());
-$("branchSelect").addEventListener("change", () => { renderBranchNotices(); checkReadiness(); });
+// Branch/Year cascade downward (a new branch changes which years exist, and so on); Semester is
+// the leaf, so it only needs to re-resolve.
+$("deptSelect").addEventListener("change", () => { rebuildClassSelectors(); checkReadiness(); });
+$("yearSelect").addEventListener("change", () => { rebuildClassSelectors(); checkReadiness(); });
+$("semSelect").addEventListener("change", () => { renderResolvedBranch(); checkReadiness(); });
 $("generateBtn").addEventListener("click", generate);
 $("compareBtn").addEventListener("click", runCompare);
 $("adjustBtn").addEventListener("click", adjust);
@@ -73,34 +77,81 @@ async function loadSeed() {
   }
 }
 
-// ---------------------------------------------------------------- 2. branch selection
-let branchesById = {};   // id -> branch row, so notices can be looked up on selection change
+// ---------------------------------------------------------------- 2. class selection
+// A branch row is one (department, year, semester) triple. Rather than make the user read
+// "CSE-DS-TY-SEM5" out of a single list, three cascading dropdowns narrow to exactly one row.
+let allBranches = [];
+let branchesById = {};
 
 async function loadBranches() {
   try {
     const res = await fetch("/api/branches");
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const branches = await res.json();
-    branchesById = Object.fromEntries(branches.map((b) => [b.id, b]));
-    const sel = $("branchSelect");
-    const previouslySelected = new Set(getSelectedBranchIds());
-    sel.innerHTML = branches
-      .map((b) => `<option value="${b.id}">${b.code} — ${b.name}${b.semester_label ? " (" + b.semester_label.slice(0, 60) + ")" : ""}</option>`)
-      .join("");
-    // preserve selection across a refresh where possible; otherwise select every branch by
-    // default so a freshly-seeded dataset is immediately included rather than silently ignored
-    let anyRestored = false;
-    [...sel.options].forEach((opt) => {
-      if (previouslySelected.has(Number(opt.value))) { opt.selected = true; anyRestored = true; }
-    });
-    if (!anyRestored) {
-      [...sel.options].forEach((opt) => { opt.selected = true; });
-    }
-    renderBranchNotices();
+    allBranches = await res.json();
+    branchesById = Object.fromEntries(allBranches.map((b) => [b.id, b]));
+    rebuildClassSelectors();
   } catch (e) {
-    // branch list is best-effort UI sugar; readiness/generate already surface backend-unreachable
-    // errors prominently, so stay quiet here
+    // best-effort UI sugar; readiness/generate already surface backend-unreachable errors
   }
+}
+
+function fillOptions(sel, values, labelFor, keep) {
+  const prev = keep && values.includes(keep) ? keep : values[0];
+  sel.innerHTML = values.map((v) => `<option value="${esc(v)}">${esc(labelFor(v))}</option>`).join("");
+  if (prev !== undefined) sel.value = prev;
+  sel.disabled = values.length <= 1;
+}
+
+function rebuildClassSelectors() {
+  const dept = $("deptSelect"), year = $("yearSelect"), sem = $("semSelect");
+
+  const depts = [...new Set(allBranches.map((b) => b.department || "—"))].sort();
+  fillOptions(dept, depts, (d) => {
+    const row = allBranches.find((b) => (b.department || "—") === d);
+    return row && row.department_name ? `${d} — ${row.department_name}` : d;
+  }, dept.value);
+
+  const inDept = allBranches.filter((b) => (b.department || "—") === dept.value);
+  // order years by the semester they teach, so SY precedes TY precedes Final Year
+  const years = [...new Set(inDept.map((b) => b.year_label || "—"))]
+    .sort((a, x) => minSem(inDept, a) - minSem(inDept, x));
+  fillOptions(year, years, (y) => {
+    const row = inDept.find((b) => (b.year_label || "—") === y);
+    return row && row.year_name ? `${y} — ${row.year_name}` : y;
+  }, year.value);
+
+  const inYear = inDept.filter((b) => (b.year_label || "—") === year.value);
+  const sems = [...new Set(inYear.map((b) => b.semester || 0))].sort((a, x) => a - x);
+  fillOptions(sem, sems.map(String), (s) => `Semester ${roman(Number(s))}`, sem.value);
+
+  renderResolvedBranch();
+}
+
+function minSem(rows, yearLabel) {
+  return Math.min(...rows.filter((b) => (b.year_label || "—") === yearLabel).map((b) => b.semester || 99));
+}
+
+function roman(n) {
+  return ({ 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII" })[n] || String(n);
+}
+
+// The single branch row the three dropdowns currently resolve to (or null if nothing matches).
+function selectedBranch() {
+  return allBranches.find((b) =>
+    (b.department || "—") === $("deptSelect").value &&
+    (b.year_label || "—") === $("yearSelect").value &&
+    String(b.semester || 0) === $("semSelect").value) || null;
+}
+
+function renderResolvedBranch() {
+  const b = selectedBranch();
+  const line = $("branchResolved");
+  if (line) {
+    line.textContent = b
+      ? `${b.code} — ${(b.semester_label || "").split("(")[0].trim() || b.name}`
+      : "no dataset loaded for this combination — load one in step 1.";
+  }
+  renderBranchNotices();
 }
 
 // Show a red alert for every selected branch that carries a Branch.notice caveat. These flag
@@ -109,9 +160,8 @@ async function loadBranches() {
 function renderBranchNotices() {
   const box = $("branchNotices");
   if (!box) return;
-  const sel = $("branchSelect");
-  const chosen = [...sel.selectedOptions].map((o) => Number(o.value));
-  const withNotice = chosen.map((id) => branchesById[id]).filter((b) => b && b.notice);
+  const chosen = selectedBranch();
+  const withNotice = chosen && chosen.notice ? [chosen] : [];
   box.innerHTML = withNotice
     .map((b) => {
       const [lead, ...rest] = String(b.notice).split("OPEN QUESTION:");
@@ -129,15 +179,13 @@ function esc(s) {
 }
 
 function getSelectedBranchIds() {
-  const sel = $("branchSelect");
-  const ids = [...sel.selectedOptions].map((o) => Number(o.value));
-  return ids.length === sel.options.length ? null : ids;  // "all selected" == no filter
+  const b = selectedBranch();
+  return b ? [b.id] : null;   // null == no filter (whole institution)
 }
 
 function branchQuery() {
   const ids = getSelectedBranchIds();
-  if (!ids) return "";
-  return "?" + ids.map((id) => `branch_ids=${id}`).join("&");
+  return ids ? "?" + ids.map((id) => `branch_ids=${id}`).join("&") : "";
 }
 
 // ---------------------------------------------------------------- 3. readiness

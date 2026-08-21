@@ -124,6 +124,13 @@ def _seed_dataset(session: Session, data: dict, branch_code: str, force: bool) -
         semester_label=data.get("class_term", ""),
         relaxed_days=list(data.get("relaxed_days", [])),
         notice=data.get("branch_notice", ""),
+        department=data.get("department", ""),
+        department_name=data.get("department_name", ""),
+        year_label=data.get("year_label", ""),
+        year_name=data.get("year_name", ""),
+        # fall back to the first division's semester -- every division of a branch shares it
+        semester=data.get("semester") or next(
+            (d.get("semester", 0) for d in data.get("divisions", [])), 0),
     )
     session.add(branch)
     session.flush()

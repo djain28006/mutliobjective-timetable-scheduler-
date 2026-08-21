@@ -82,14 +82,25 @@
   </section>
 
   <section class="panel-section" id="branchSection">
-    <h2>2. Branch (year/program)</h2>
-    <p class="notes">Pick which branch(es) to generate/compare/sweep against. Leave none selected
-      to include the whole institution — only safe if every included branch uses distinct division
-      names (the readiness banner below will say so if not).</p>
-    <div class="control-row">
-      <select id="branchSelect" multiple size="4" style="min-width:280px"></select>
+    <h2>2. Class</h2>
+    <p class="notes">Choose the class to generate, compare, or sweep. Each combination resolves to
+      one loaded dataset; options narrow as you pick.</p>
+    <div class="controls">
+      <div class="control">
+        <label>Branch</label>
+        <select id="deptSelect"></select>
+      </div>
+      <div class="control">
+        <label>Year</label>
+        <select id="yearSelect"></select>
+      </div>
+      <div class="control">
+        <label>Semester</label>
+        <select id="semSelect"></select>
+      </div>
       <button type="button" id="branchRefreshBtn" class="secondary">Refresh</button>
     </div>
+    <div class="status-line" id="branchResolved"></div>
     <!-- Known-caveat alerts for the selected branch(es) -- Branch.notice, e.g. Sem VII's
          missing OJT division. Rendered here (before Generate) so the caveat is read BEFORE a
          plausible-looking timetable is produced, not discovered afterwards. -->

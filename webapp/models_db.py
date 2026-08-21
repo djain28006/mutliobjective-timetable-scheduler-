@@ -24,6 +24,15 @@ class BranchBase(SQLModel):
     code: str = Field(index=True)
     name: str
     semester_label: str = ""
+    # A "branch" row is really one (department, year, semester) triple -- the code string
+    # ("CSE-DS-TY-SEM5") encodes all three, which is unreadable in a picker and forces the UI to
+    # parse identifiers. Stored as separate fields so the UI can offer three plain dropdowns and
+    # resolve them back to exactly one row.
+    department: str = ""        # "CSE-DS"
+    department_name: str = ""   # "Computer Science & Engineering (Data Science)"
+    year_label: str = ""        # "SY" | "TY" | "BTech"
+    year_name: str = ""         # "Second Year"
+    semester: int = 0           # 4
 
 
 class Branch(BranchBase, table=True):
