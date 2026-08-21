@@ -2,25 +2,45 @@
 model.py — CP-SAT model builder.
 Creates all decision variables, encodes all 21 hard constraints (HC) and
 9 soft penalty terms (SC), then returns the model and variable dictionaries.
+
+Takes a DataBundle (see data.py) instead of importing module-level globals, so the same
+builder works against the hardcoded default dataset or a dashboard/DB-driven one.
 """
 
 from ortools.sat.python import cp_model
-from data import (
-    NUM_DAYS, ACADEMIC_SLOTS, LAB_START_SLOTS, LAST_SLOT,
-    MORNING_SLOTS, AFTERNOON_SLOTS,
-    NUM_DIVS, NUM_BATCHES, DIV_TO_BATCHES, SIBLING_PAIRS,
-    NUM_LABS, THEORY_SUBJ, NUM_THEORY_SUBJ,
-    LAB_SUBJ, NUM_LAB_SUBJ, WE_LAB_IDX, CMPM_LAB_IDX,
-    ALL_TEACHERS, THEORY_LAB_PAIRS, DIFFICULT_SUBJ_IDX,
-    MIN_HOURS_PER_DAY, MAX_HOURS_PER_DAY,
-    W_FAC_GAP, W_FAC_OVERLOAD, W_FAC_H1, W_FAC_H9, W_FAC_CONSEC,
-    W_STU_CONSEC_DIFF, W_STU_THEORY_H9, W_STU_3DAYS_SAME, W_STU_CAMPUS_STAY,
-    W_RES_CLASSROOM, W_RES_LAB,
-)
 
 
-def build_model():
+def build_model(data):
     model = cp_model.CpModel()
+
+    NUM_DAYS = data.NUM_DAYS
+    ACADEMIC_SLOTS = data.ACADEMIC_SLOTS
+    LAB_START_SLOTS = data.LAB_START_SLOTS
+    LAST_SLOT = data.LAST_SLOT
+    NUM_DIVS = data.NUM_DIVS
+    NUM_BATCHES = data.NUM_BATCHES
+    DIV_TO_BATCHES = data.DIV_TO_BATCHES
+    SIBLING_PAIRS = data.SIBLING_PAIRS
+    NUM_LABS = data.NUM_LABS
+    THEORY_SUBJ = data.THEORY_SUBJ
+    NUM_THEORY_SUBJ = data.NUM_THEORY_SUBJ
+    LAB_SUBJ = data.LAB_SUBJ
+    NUM_LAB_SUBJ = data.NUM_LAB_SUBJ
+    ALL_TEACHERS = data.ALL_TEACHERS
+    THEORY_LAB_PAIRS = data.THEORY_LAB_PAIRS
+    DIFFICULT_SUBJ_IDX = data.DIFFICULT_SUBJ_IDX
+    MIN_HOURS_PER_DAY = data.MIN_HOURS_PER_DAY
+    MAX_HOURS_PER_DAY = data.MAX_HOURS_PER_DAY
+    W_FAC_GAP = data.W_FAC_GAP
+    W_FAC_OVERLOAD = data.W_FAC_OVERLOAD
+    W_FAC_H1 = data.W_FAC_H1
+    W_FAC_H9 = data.W_FAC_H9
+    W_FAC_CONSEC = data.W_FAC_CONSEC
+    W_STU_CONSEC_DIFF = data.W_STU_CONSEC_DIFF
+    W_STU_THEORY_H9 = data.W_STU_THEORY_H9
+    W_STU_3DAYS_SAME = data.W_STU_3DAYS_SAME
+    W_RES_CLASSROOM = data.W_RES_CLASSROOM
+    W_RES_LAB = data.W_RES_LAB
 
     # =========================================================================
     # A.  DECISION VARIABLES
@@ -72,7 +92,7 @@ def build_model():
                 is_on_campus[(div, day, s)] = model.NewBoolVar(f'camp_{div}_{day}_{s}')
             # Exactly one break per day
             model.AddExactlyOne(is_break[(div, day, s)] for s in range(9))
-            
+
             # Break window (after first 2 lectures, before last 2 lectures)
             for s in range(9):
                 if s < 2 or s > 9 - 3:
@@ -84,7 +104,6 @@ def build_model():
                     model.AddImplication(is_break[(div, day, s)], is_on_campus[(div, day, s+1)])
                     model.AddImplication(is_break[(div, day, s)], is_on_campus[(div, day, s+2)])
 
-
     # ---- HC15 + HC16: OE pattern ----------------------------------------
     # Exactly one 1-hr day and one 2-hr day; must be different days.
     model.AddExactlyOne(oe1)
@@ -92,19 +111,21 @@ def build_model():
     for d in range(NUM_DAYS):
         model.Add(oe1[d] + oe2[d] <= 1)   # different days for OE patterns
 
-    # ---- HC17: WE-Lab exactly twice per batch per week, on different days ---
+    # ---- HC17: twice-weekly lab subjects run exactly twice per batch per week,
+    # on different days. HC18: every other lab subject exactly once. ----------
+    twice_weekly_idx = [i for i, s in enumerate(LAB_SUBJ) if s['twice']]
     for b in range(NUM_BATCHES):
-        model.Add(
-            sum(lv[(b, WE_LAB_IDX, d, ss)]
-                for d in range(NUM_DAYS) for ss in LAB_START_SLOTS) == 2)
-        for d in range(NUM_DAYS):
+        for ls in twice_weekly_idx:
             model.Add(
-                sum(lv[(b, WE_LAB_IDX, d, ss)] for ss in LAB_START_SLOTS) <= 1)
+                sum(lv[(b, ls, d, ss)]
+                    for d in range(NUM_DAYS) for ss in LAB_START_SLOTS) == 2)
+            for d in range(NUM_DAYS):
+                model.Add(
+                    sum(lv[(b, ls, d, ss)] for ss in LAB_START_SLOTS) <= 1)
 
-    # ---- HC18: All other lab subjects exactly once per batch per week -------
     for b in range(NUM_BATCHES):
         for ls in range(NUM_LAB_SUBJ):
-            if ls != WE_LAB_IDX:
+            if ls not in twice_weekly_idx:
                 model.Add(
                     sum(lv[(b, ls, d, ss)]
                         for d in range(NUM_DAYS) for ss in LAB_START_SLOTS) == 1)
@@ -152,14 +173,16 @@ def build_model():
                     ==
                     sum(lv[(b2, ls, day, ss)] for ls in range(NUM_LAB_SUBJ))
                 )
-                
-    # Also enforce HC14: CMPM-Lab sibling pairs start simultaneously
+
+    # Also enforce HC14: sibling-sync lab subjects start simultaneously for both siblings
+    sibling_sync_idx = [i for i, s in enumerate(LAB_SUBJ) if s['sibling_sync']]
     for (b1, b2) in SIBLING_PAIRS:
-        for day in range(NUM_DAYS):
-            for ss in LAB_START_SLOTS:
-                model.Add(
-                    lv[(b1, CMPM_LAB_IDX, day, ss)]
-                    == lv[(b2, CMPM_LAB_IDX, day, ss)])
+        for ls in sibling_sync_idx:
+            for day in range(NUM_DAYS):
+                for ss in LAB_START_SLOTS:
+                    model.Add(
+                        lv[(b1, ls, day, ss)]
+                        == lv[(b2, ls, day, ss)])
 
     # ---- HC10: No batch clash -----------------------------------------------
     # A batch cannot be in two labs at the same slot.
@@ -218,35 +241,38 @@ def build_model():
                 if 1 in LAB_START_SLOTS:
                     model.Add(lv[(b, ls, day, 1)] == 0).OnlyEnforceIf(oe2[day])
 
-    # ---- CMPM Honours constraint (start or end of day) ----------
-    CMPM_THEORY_IDX = 4
-    for div in range(NUM_DIVS):
-        for day in range(NUM_DAYS):
-            # Block globally from mid-day H3, H4, H5, H6, H7 (indices 2, 3, 4, 5, 6)
-            for s in [2, 3, 4, 5, 6]:
-                model.Add(tv[(div, CMPM_THEORY_IDX, day, s)] == 0)
-            
-            # Block from H2 on OE-1hr days to prevent gap for non-CMPM students
-            model.Add(tv[(div, CMPM_THEORY_IDX, day, 1)] == 0).OnlyEnforceIf(oe1[day])
+    # ---- Day-edges-only constraint (theory): subjects flagged day_edges_only must
+    # sit at the start or end of the day, never mid-day -----------------------------
+    day_edges_theory_idx = [i for i, s in enumerate(THEORY_SUBJ) if s.get('day_edges_only')]
+    for subj in day_edges_theory_idx:
+        for div in range(NUM_DIVS):
+            for day in range(NUM_DAYS):
+                # Block globally from mid-day H3, H4, H5, H6, H7 (indices 2, 3, 4, 5, 6)
+                for s in [2, 3, 4, 5, 6]:
+                    model.Add(tv[(div, subj, day, s)] == 0)
 
-    # ---- CMPM Lab constraint (start or end of day) --------------
-    for b in range(NUM_BATCHES):
-        for day in range(NUM_DAYS):
-            # Block start slots in the mid-day: H3, H4, H5, H6 (indices 2, 3, 4, 5)
-            # Allowed start slots: H1 (0), H2 (1) and H7 (6), H8 (7)
-            for ss in [2, 3, 4, 5]:
-                if ss in LAB_START_SLOTS:
-                    model.Add(lv[(b, CMPM_LAB_IDX, day, ss)] == 0)
-            
-            # Block from H2 on OE-1hr days to prevent gap for non-CMPM students
-            if 1 in LAB_START_SLOTS:
-                model.Add(lv[(b, CMPM_LAB_IDX, day, 1)] == 0).OnlyEnforceIf(oe1[day])
+                # Block from H2 on OE-1hr days to prevent gap for non-flagged-subject students
+                model.Add(tv[(div, subj, day, 1)] == 0).OnlyEnforceIf(oe1[day])
+
+    # ---- Day-edges-only constraint (lab): same rule for flagged lab subjects -------
+    day_edges_lab_idx = [i for i, s in enumerate(LAB_SUBJ) if s.get('day_edges_only')]
+    for ls in day_edges_lab_idx:
+        for b in range(NUM_BATCHES):
+            for day in range(NUM_DAYS):
+                # Block start slots in the mid-day: H3, H4, H5, H6 (indices 2, 3, 4, 5)
+                # Allowed start slots: H1 (0), H2 (1) and H7 (6), H8 (7)
+                for ss in [2, 3, 4, 5]:
+                    if ss in LAB_START_SLOTS:
+                        model.Add(lv[(b, ls, day, ss)] == 0)
+
+                # Block from H2 on OE-1hr days to prevent gap for non-flagged-subject students
+                if 1 in LAB_START_SLOTS:
+                    model.Add(lv[(b, ls, day, 1)] == 0).OnlyEnforceIf(oe1[day])
 
     # ---- Division-in-lab indicator + no theory during lab -------------------
     # Theory is division-wide — if ANY batch of the division is in lab at slot s,
     # the whole division cannot run theory at that slot (students attending theory
     # must all be present; batch in lab cannot attend theory simultaneously).
-    # Now that HC13 is removed, we check ALL batches of the division, not just b_rep.
     div_in_lab_at = {}   # (div, day, slot) -> BoolVar
     for div in range(NUM_DIVS):
         batches_of_div = DIV_TO_BATCHES[div]   # e.g. [0,1] for D1
@@ -268,9 +294,6 @@ def build_model():
                         model.Add(tv[(div, subj, day, slot)] + dil <= 1)
 
     # ---- HC8: Teacher clash (≤ 1 activity per teacher per day-slot) ---------
-    # CMPM-Lab no longer needs special handling: sibling pairs now have different
-    # teachers (B1→AVG/B2→MAA, B3→MAA/B4→AVG, B5→RP/B6→AVG), so the standard
-    # per-batch check naturally prevents clashes even when HC14 forces simultaneity.
     for teacher in ALL_TEACHERS:
         for day in range(NUM_DAYS):
             for slot in ACADEMIC_SLOTS:
@@ -280,7 +303,7 @@ def build_model():
                     for subj in range(NUM_THEORY_SUBJ):
                         if THEORY_SUBJ[subj]['teachers'].get(div) == teacher:
                             t_vars.append(tv[(div, subj, day, slot)])
-                # Lab contributions — all labs treated uniformly (including CMPM-Lab)
+                # Lab contributions — all labs treated uniformly (including sibling-sync labs)
                 for b in range(NUM_BATCHES):
                     for ls in range(NUM_LAB_SUBJ):
                         if LAB_SUBJ[ls]['teachers'].get(b) == teacher:
@@ -289,7 +312,6 @@ def build_model():
                                     t_vars.append(lv[(b, ls, day, ss)])
                 if t_vars:
                     model.Add(sum(t_vars) <= 1)
-
 
     # ---- HC21: Theory and lab of same subject cannot overlap ----------------
     for (ts, ls) in THEORY_LAB_PAIRS:
@@ -308,7 +330,6 @@ def build_model():
                         model.Add(tv[(div, ts, day, slot)] + dil <= 1)
 
     # ---- HC1 (daily hours): Each division has MIN..MAX academic hours/day ---
-    # Note: MIN=5 (relaxed from 6) to allow mathematical feasibility with HC2.
     div_day_hours = {}
     for div in range(NUM_DIVS):
         batches_of_div = DIV_TO_BATCHES[div]   # both batches, e.g. [0,1]
@@ -323,9 +344,6 @@ def build_model():
             terms.append(oe2[day])
             terms.append(oe2[day])
             # Lab hours: count UNION of both batches' lab blocks (not just b_rep).
-            # A lab block at start_slot ss = 2hrs regardless of how many batches
-            # of the division are in lab at that ss (they'd be in different rooms).
-            # We use a BoolVar per ss that is 1 if ANY batch of div has a lab at ss.
             for ss in LAB_START_SLOTS:
                 any_lab_at_ss = model.NewBoolVar(f'anylb_{div}_{day}_{ss}')
                 lab_at_ss_vars = [
@@ -370,12 +388,9 @@ def build_model():
     # -------------------------------------------------------------------------
     # FACULTY SCORE
     # -------------------------------------------------------------------------
-    
     for teacher in ALL_TEACHERS:
-        # Build teacher-active BoolVar per academic slot
         ta = {}
         daily_load = []
-        days_active = []
         for day in range(NUM_DAYS):
             load_terms = []
             for slot in ACADEMIC_SLOTS:
@@ -396,20 +411,17 @@ def build_model():
                     model.Add(sum(t_vars) == 0).OnlyEnforceIf(act.Not())
                     ta[(day, slot)] = act
                     load_terms.append(act)
-            
+
             if load_terms:
-                # F2: Teaching >4 hours/day penalty
                 ld = model.NewIntVar(0, 12, f'fac_ld_{teacher}_{day}')
                 model.Add(ld == sum(load_terms))
                 daily_load.append(ld)
-                
+
                 overload = model.NewIntVar(0, 12, f'fac_over_{teacher}_{day}')
-                # overload = max(0, ld - 4)
                 model.AddMaxEquality(overload, [0, ld - 4])
                 faculty_penalties.append(W_FAC_OVERLOAD * overload)
-                
-        # F5: Consecutive lectures 3+ in a row
-        consec_triples = [(0,1,2), (1,2,3), (5,6,7), (6,7,8)]
+
+        consec_triples = [(0, 1, 2), (1, 2, 3), (5, 6, 7), (6, 7, 8)]
         for day in range(NUM_DAYS):
             for (s1, s2, s3) in consec_triples:
                 if (day, s1) in ta and (day, s2) in ta and (day, s3) in ta:
@@ -417,9 +429,7 @@ def build_model():
                     model.AddBoolAnd([ta[(day, s1)], ta[(day, s2)], ta[(day, s3)]]).OnlyEnforceIf(consec3)
                     model.AddBoolOr([ta[(day, s1)].Not(), ta[(day, s2)].Not(), ta[(day, s3)].Not()]).OnlyEnforceIf(consec3.Not())
                     faculty_penalties.append(W_FAC_CONSEC * consec3)
-        
-        # F1: Idle gaps between lectures same day
-        consec_triples = [(0,1,2), (1,2,3), (5,6,7), (6,7,8)]
+
         for day in range(NUM_DAYS):
             for (s1, s2, s3) in consec_triples:
                 if (day, s1) in ta and (day, s2) in ta and (day, s3) in ta:
@@ -427,20 +437,16 @@ def build_model():
                     model.AddBoolAnd([ta[(day, s1)], ta[(day, s2)].Not(), ta[(day, s3)]]).OnlyEnforceIf(gap)
                     model.AddBoolOr([ta[(day, s1)].Not(), ta[(day, s2)], ta[(day, s3)].Not()]).OnlyEnforceIf(gap.Not())
                     faculty_penalties.append(W_FAC_GAP * gap)
-                    
-        # F3 & F4: H1 and H9 assignment penalty
+
         for day in range(NUM_DAYS):
             if (day, 0) in ta:
                 faculty_penalties.append(W_FAC_H1 * ta[(day, 0)])
             if (day, LAST_SLOT) in ta:
                 faculty_penalties.append(W_FAC_H9 * ta[(day, LAST_SLOT)])
 
-
     # -------------------------------------------------------------------------
     # STUDENT SCORE
     # -------------------------------------------------------------------------
-    
-    # Pre-build active slots per division to compute campus stay and idle gaps
     active_physical = {}
     for div in range(NUM_DIVS):
         for day in range(NUM_DAYS):
@@ -458,7 +464,7 @@ def build_model():
                     terms.append(oe1[day])
                 if s in (0, 1):
                     terms.append(oe2[day])
-                
+
                 if terms:
                     model.Add(sum(terms) >= 1).OnlyEnforceIf(act_s)
                     model.Add(sum(terms) == 0).OnlyEnforceIf(act_s.Not())
@@ -466,37 +472,32 @@ def build_model():
                     model.Add(act_s == 0)
                 active_physical[(div, day, s)] = act_s
 
-                # No theory or lab during break
                 model.Add(act_s == 0).OnlyEnforceIf(is_break[(div, day, s)])
-                
-                # Active physical + break = is_on_campus (for the block)
                 model.Add(is_on_campus[(div, day, s)] == act_s + is_break[(div, day, s)])
-            
-            # Campus total size = active slots + 1 break
+
             model.Add(sum(is_on_campus[(div, day, s)] for s in range(9)) == div_day_hours[(div, day)] + 1)
-            
+
             # ST1: HARD CONSTRAINT: Student No-Gap
-            # is_on_campus must be a single contiguous block of 1s
             for s in range(9):
                 before_empty = model.NewBoolVar(f'stu_be_{div}_{day}_{s}')
                 after_empty = model.NewBoolVar(f'stu_ae_{div}_{day}_{s}')
-                
+
                 if s == 0:
                     model.Add(before_empty == 1)
                 else:
                     model.Add(sum(is_on_campus[(div, day, i)] for i in range(0, s)) == 0).OnlyEnforceIf(before_empty)
                     model.Add(sum(is_on_campus[(div, day, i)] for i in range(0, s)) > 0).OnlyEnforceIf(before_empty.Not())
-                    
+
                 if s == 8:
                     model.Add(after_empty == 1)
                 else:
                     model.Add(sum(is_on_campus[(div, day, i)] for i in range(s+1, 9)) == 0).OnlyEnforceIf(after_empty)
                     model.Add(sum(is_on_campus[(div, day, i)] for i in range(s+1, 9)) > 0).OnlyEnforceIf(after_empty.Not())
-                    
-                # If slot is inactive, either all before is empty or all after is empty
+
                 model.AddBoolOr([is_on_campus[(div, day, s)], before_empty, after_empty])
+
     # ST2: >2 consecutive difficult subjects
-    consec_triples = [(0,1,2), (1,2,3), (5,6,7), (6,7,8)]
+    consec_triples = [(0, 1, 2), (1, 2, 3), (5, 6, 7), (6, 7, 8)]
     for div in range(NUM_DIVS):
         for day in range(NUM_DAYS):
             for (s1, s2, s3) in consec_triples:
@@ -525,48 +526,42 @@ def build_model():
                 d1_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day}')
                 model.Add(sum(tv[(div, subj, day, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d1_act)
                 model.Add(sum(tv[(div, subj, day, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d1_act.Not())
-                
+
                 d2_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day+1}')
                 model.Add(sum(tv[(div, subj, day+1, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d2_act)
                 model.Add(sum(tv[(div, subj, day+1, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d2_act.Not())
-                
+
                 d3_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day+2}')
                 model.Add(sum(tv[(div, subj, day+2, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d3_act)
                 model.Add(sum(tv[(div, subj, day+2, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d3_act.Not())
-                
+
                 consec3 = model.NewBoolVar(f'stu_c3_{div}_{subj}_{day}')
                 model.AddBoolAnd([d1_act, d2_act, d3_act]).OnlyEnforceIf(consec3)
                 model.AddBoolOr([d1_act.Not(), d2_act.Not(), d3_act.Not()]).OnlyEnforceIf(consec3.Not())
                 student_penalties.append(W_STU_3DAYS_SAME * consec3)
 
-
     # -------------------------------------------------------------------------
     # RESOURCE SCORE
     # -------------------------------------------------------------------------
-    
-    # R1: Balanced classroom utilization
     cr_totals = []
     for div in range(NUM_DIVS):
-        # Division div uses CLASSROOMS[div]. We count theory slots and OE slots
         cu = model.NewIntVar(0, 100, f'res_cu_{div}')
         cr_terms = []
         for subj in range(NUM_THEORY_SUBJ):
             for day in range(NUM_DAYS):
                 for s in ACADEMIC_SLOTS:
                     cr_terms.append(tv[(div, subj, day, s)])
-        # OE terms
         cr_terms.append(sum(oe1))
         cr_terms.append(sum(oe2) * 2)
         model.Add(cu == sum(cr_terms))
         cr_totals.append(cu)
-        
+
     cu_max = model.NewIntVar(0, 100, 'res_cumax')
     cu_min = model.NewIntVar(0, 100, 'res_cumin')
     model.AddMaxEquality(cu_max, cr_totals)
     model.AddMinEquality(cu_min, cr_totals)
     resource_penalties.append(W_RES_CLASSROOM * (cu_max - cu_min))
 
-    # R2: Balanced lab utilization
     room_totals = []
     for r in range(NUM_LABS):
         ru = model.NewIntVar(0, 200, f'res_ru_{r}')
@@ -582,165 +577,9 @@ def build_model():
     model.AddMinEquality(ru_min, room_totals)
     resource_penalties.append(W_RES_LAB * (ru_max - ru_min))
 
-
     # =========================================================================
-    # D.  OBJECTIVE — Phase 1: Expose 3 Scores + Minimise Sum
+    # D.  OBJECTIVE — expose 3 scores + minimize their sum
     # =========================================================================
-    
-    faculty_score = model.NewIntVar(0, 10_000_000, 'faculty_score')
-    student_score = model.NewIntVar(0, 10_000_000, 'student_score')
-    resource_score = model.NewIntVar(0, 10_000_000, 'resource_score')
-
-    model.Add(faculty_score == sum(faculty_penalties))
-    model.Add(student_score == sum(student_penalties))
-    model.Add(resource_score == sum(resource_penalties))
-    # Pre-build active slots per division to compute campus stay and idle gaps
-    active_physical = {}
-    for div in range(NUM_DIVS):
-        for day in range(NUM_DAYS):
-            for s in range(9):
-                act_s = model.NewBoolVar(f'stu_act_{div}_{day}_{s}')
-                terms = []
-                for subj in range(NUM_THEORY_SUBJ):
-                    terms.append(tv[(div, subj, day, s)])
-                for b in DIV_TO_BATCHES[div]:
-                    for ls in range(NUM_LAB_SUBJ):
-                        for ss in LAB_START_SLOTS:
-                            if ss == s or ss + 1 == s:
-                                terms.append(lv[(b, ls, day, ss)])
-                if s == 0:
-                    terms.append(oe1[day])
-                if s in (0, 1):
-                    terms.append(oe2[day])
-                
-                if terms:
-                    model.Add(sum(terms) >= 1).OnlyEnforceIf(act_s)
-                    model.Add(sum(terms) == 0).OnlyEnforceIf(act_s.Not())
-                else:
-                    model.Add(act_s == 0)
-                active_physical[(div, day, s)] = act_s
-
-                # No theory or lab during break
-                model.Add(act_s == 0).OnlyEnforceIf(is_break[(div, day, s)])
-                
-                # Active physical + break = is_on_campus (for the block)
-                model.Add(is_on_campus[(div, day, s)] == act_s + is_break[(div, day, s)])
-            
-            # Campus total size = active slots + 1 break
-            model.Add(sum(is_on_campus[(div, day, s)] for s in range(9)) == div_day_hours[(div, day)] + 1)
-            
-            # ST1: HARD CONSTRAINT: Student No-Gap
-            # is_on_campus must be a single contiguous block of 1s
-            for s in range(9):
-                before_empty = model.NewBoolVar(f'stu_be_{div}_{day}_{s}')
-                after_empty = model.NewBoolVar(f'stu_ae_{div}_{day}_{s}')
-                
-                if s == 0:
-                    model.Add(before_empty == 1)
-                else:
-                    model.Add(sum(is_on_campus[(div, day, i)] for i in range(0, s)) == 0).OnlyEnforceIf(before_empty)
-                    model.Add(sum(is_on_campus[(div, day, i)] for i in range(0, s)) > 0).OnlyEnforceIf(before_empty.Not())
-                    
-                if s == 8:
-                    model.Add(after_empty == 1)
-                else:
-                    model.Add(sum(is_on_campus[(div, day, i)] for i in range(s+1, 9)) == 0).OnlyEnforceIf(after_empty)
-                    model.Add(sum(is_on_campus[(div, day, i)] for i in range(s+1, 9)) > 0).OnlyEnforceIf(after_empty.Not())
-                    
-                # If slot is inactive, either all before is empty or all after is empty
-                model.AddBoolOr([is_on_campus[(div, day, s)], before_empty, after_empty])
-    # ST2: >2 consecutive difficult subjects
-    consec_triples = [(0,1,2), (1,2,3), (5,6,7), (6,7,8)]
-    for div in range(NUM_DIVS):
-        for day in range(NUM_DAYS):
-            for (s1, s2, s3) in consec_triples:
-                diff_flags = []
-                for slot in (s1, s2, s3):
-                    is_diff = model.NewBoolVar(f'stu_s4_{div}_{day}_{slot}')
-                    diff_here = [tv[(div, subj, day, slot)] for subj in DIFFICULT_SUBJ_IDX]
-                    model.Add(sum(diff_here) >= 1).OnlyEnforceIf(is_diff)
-                    model.Add(sum(diff_here) == 0).OnlyEnforceIf(is_diff.Not())
-                    diff_flags.append(is_diff)
-                all_diff = model.NewBoolVar(f'stu_s4all_{div}_{day}_{s1}')
-                model.AddBoolAnd(diff_flags).OnlyEnforceIf(all_diff)
-                model.AddBoolOr([v.Not() for v in diff_flags]).OnlyEnforceIf(all_diff.Not())
-                student_penalties.append(W_STU_CONSEC_DIFF * all_diff)
-
-    # ST3: Theory in H9 penalty
-    for div in range(NUM_DIVS):
-        for subj in range(NUM_THEORY_SUBJ):
-            for day in range(NUM_DAYS):
-                student_penalties.append(W_STU_THEORY_H9 * tv[(div, subj, day, LAST_SLOT)])
-
-    # ST4: Same theory subject on 3+ consecutive days penalty
-    for div in range(NUM_DIVS):
-        for subj in range(NUM_THEORY_SUBJ):
-            for day in range(NUM_DAYS - 2):
-                d1_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day}')
-                model.Add(sum(tv[(div, subj, day, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d1_act)
-                model.Add(sum(tv[(div, subj, day, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d1_act.Not())
-                
-                d2_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day+1}')
-                model.Add(sum(tv[(div, subj, day+1, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d2_act)
-                model.Add(sum(tv[(div, subj, day+1, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d2_act.Not())
-                
-                d3_act = model.NewBoolVar(f'stu_3d_{div}_{subj}_{day+2}')
-                model.Add(sum(tv[(div, subj, day+2, s)] for s in ACADEMIC_SLOTS) >= 1).OnlyEnforceIf(d3_act)
-                model.Add(sum(tv[(div, subj, day+2, s)] for s in ACADEMIC_SLOTS) == 0).OnlyEnforceIf(d3_act.Not())
-                
-                consec3 = model.NewBoolVar(f'stu_c3_{div}_{subj}_{day}')
-                model.AddBoolAnd([d1_act, d2_act, d3_act]).OnlyEnforceIf(consec3)
-                model.AddBoolOr([d1_act.Not(), d2_act.Not(), d3_act.Not()]).OnlyEnforceIf(consec3.Not())
-                student_penalties.append(W_STU_3DAYS_SAME * consec3)
-
-
-    # -------------------------------------------------------------------------
-    # RESOURCE SCORE
-    # -------------------------------------------------------------------------
-    
-    # R1: Balanced classroom utilization
-    cr_totals = []
-    for div in range(NUM_DIVS):
-        # Division div uses CLASSROOMS[div]. We count theory slots and OE slots
-        cu = model.NewIntVar(0, 100, f'res_cu_{div}')
-        cr_terms = []
-        for subj in range(NUM_THEORY_SUBJ):
-            for day in range(NUM_DAYS):
-                for s in ACADEMIC_SLOTS:
-                    cr_terms.append(tv[(div, subj, day, s)])
-        # OE terms
-        cr_terms.append(sum(oe1))
-        cr_terms.append(sum(oe2) * 2)
-        model.Add(cu == sum(cr_terms))
-        cr_totals.append(cu)
-        
-    cu_max = model.NewIntVar(0, 100, 'res_cumax')
-    cu_min = model.NewIntVar(0, 100, 'res_cumin')
-    model.AddMaxEquality(cu_max, cr_totals)
-    model.AddMinEquality(cu_min, cr_totals)
-    resource_penalties.append(W_RES_CLASSROOM * (cu_max - cu_min))
-
-    # R2: Balanced lab utilization
-    room_totals = []
-    for r in range(NUM_LABS):
-        ru = model.NewIntVar(0, 200, f'res_ru_{r}')
-        model.Add(ru == sum(lr[(b, ls, d, ss, r)]
-                             for b in range(NUM_BATCHES)
-                             for ls in range(NUM_LAB_SUBJ)
-                             for d in range(NUM_DAYS)
-                             for ss in LAB_START_SLOTS))
-        room_totals.append(ru)
-    ru_max = model.NewIntVar(0, 200, 'res_rumax')
-    ru_min = model.NewIntVar(0, 200, 'res_rumin')
-    model.AddMaxEquality(ru_max, room_totals)
-    model.AddMinEquality(ru_min, room_totals)
-    resource_penalties.append(W_RES_LAB * (ru_max - ru_min))
-
-
-    # =========================================================================
-    # D.  OBJECTIVE — Phase 1: Expose 3 Scores + Minimise Sum
-    # =========================================================================
-    
     faculty_score = model.NewIntVar(0, 10_000_000, 'faculty_score')
     student_score = model.NewIntVar(0, 10_000_000, 'student_score')
     resource_score = model.NewIntVar(0, 10_000_000, 'resource_score')
@@ -764,6 +603,6 @@ def build_model():
         'faculty_score': faculty_score,
         'student_score': student_score,
         'resource_score': resource_score,
-        'total_penalty': total_penalty
+        'total_penalty': total_penalty,
     }
     return model, vars_dict

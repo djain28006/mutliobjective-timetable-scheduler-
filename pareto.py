@@ -3,9 +3,11 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from ortools.sat.python import cp_model
+from data import DataBundle
 from model import build_model
 
 def generate_pareto_front(time_limit=30):
+    data = DataBundle.default()
     solutions = []
     seen = set()
     
@@ -27,7 +29,7 @@ def generate_pareto_front(time_limit=30):
         runs.append(('Min Res', 220, e_fac))
         
     for run_type, e_stu, e_fac in runs:
-        model, vars_dict = build_model()
+        model, vars_dict = build_model(data)
         
         # Apply epsilon bounds based on run type
         run_desc = run_type
@@ -66,7 +68,7 @@ def generate_pareto_front(time_limit=30):
                 seen.add(sig)
                 
                 from extract_schedule import extract_schedule
-                timetable_data = extract_schedule(solver, vars_dict)
+                timetable_data = extract_schedule(solver, vars_dict, data)
                 
                 solution = {
                     "id": len(solutions) + 1,

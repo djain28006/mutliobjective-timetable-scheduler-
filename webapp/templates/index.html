@@ -60,10 +60,22 @@
 </head>
 <body>
     <header class="navbar">
-        <div class="logo">University Timetable UI</div>
+        <div class="logo">University Timetable UI <span style="font-weight:400;font-size:13px;opacity:.85">&mdash; SY Sem IV reference</span></div>
         <button class="solve-btn" disabled>Solved</button>
     </header>
-    
+
+    <!-- This page renders the ORIGINAL bespoke CP-SAT pipeline, which is hardwired to the single
+         SY Sem IV dataset solved once at server startup -- it has no year/branch concept by design.
+         Other years (SY Sem III, TY Sem V, BTech Sem VII) live in the DB-backed platform, so point
+         there explicitly rather than leaving this page looking like the whole product. -->
+    <div style="padding:10px 16px;background:#fff8e1;border-bottom:1px solid #e0d6b8;font-size:14px;color:#5d4037">
+        Showing the fixed <b>SY Semester IV</b> reference timetable (single-dataset pipeline).
+        For <b>other years &amp; semesters</b> &mdash; SY Sem III, TY Sem V, BTech Sem VII &mdash; with
+        solver comparison and Pareto sweeps, open the
+        <a href="/platform" style="color:#003877;font-weight:600">timetable platform</a>
+        (or <a href="/dashboard" style="color:#003877;font-weight:600">edit faculty &amp; subjects</a>).
+    </div>
+
     <div class="container">
         <aside class="sidebar">
             <button class="tab-btn active" data-tab="divisions">Divisions</button>

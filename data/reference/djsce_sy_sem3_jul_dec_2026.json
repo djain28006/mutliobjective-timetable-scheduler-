@@ -1,0 +1,665 @@
+{
+  "_transcription_note": "Transcribed by reading a photographed DJSCE CSE-DS timetable directly. The photo captured only Division D3's grid plus the subject/room/faculty legend -- its header row (Class/Semester/W.E.F.) was on a preceding page not photographed -- so the class/semester is DEDUCED, not read: (1) the sheet lists 'Innovative Product Development I' where the TY Sem V sheet lists IPD III, and IPD numbering tracks year progression; (2) July-December is an odd semester (I/III/V/VII) and Sem V + Sem VII are already accounted for by the other two photographed sheets; (3) there is no Physics/Chemistry/Engineering-Maths content, ruling out FY Sem I; (4) the subject mix (CSF, DBS, DSL-Python, MIS, PAIE) is a coherent predecessor to the SY Sem IV reference dataset's DS/ML-I/SDS. Hence SY (2nd year), Semester III. D1/D2 are copies of the photographed D3's subject list with the same faculty -- all divisions of a year share the subject list (user-confirmed); per-division faculty is editable on the dashboard. Weekly counts (MIS/UHV/PAIE/OE) were bumped up from the initial transcription, which summed to 28h/week -- below the hard 5x6h floor, unconditionally infeasible -- to 32h/week.",
+  "institution": "Dwarkadas J. Sanghvi College of Engineering (DJSCE), Dept. of CSE (Data Science)",
+  "class_term": "SY, Semester III, Divisions D1/D2/D3, academic term July-December 2026",
+  "department": "CSE-DS",
+  "department_name": "Computer Science & Engineering (Data Science)",
+  "year_label": "SY",
+  "year_name": "Second Year",
+  "semester": 3,
+  "days_per_week": 5,
+  "protected_notes": [
+    "Monday morning is reserved for Community Engagement Service; Tuesday morning for Innovative Product Development (IPD I) / Research / Project Work.",
+    "Saturday is reserved for Remedial lectures, Hackathons/student-chapter events, and guest lectures (not part of the optimized Mon-Fri grid)."
+  ],
+  "time_slots": [
+    {
+      "id": 0,
+      "day": 0,
+      "period": 0,
+      "start": "08:00",
+      "end": "09:00"
+    },
+    {
+      "id": 1,
+      "day": 0,
+      "period": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "id": 2,
+      "day": 0,
+      "period": 2,
+      "start": "10:00",
+      "end": "11:00"
+    },
+    {
+      "id": 3,
+      "day": 0,
+      "period": 3,
+      "start": "11:00",
+      "end": "12:00"
+    },
+    {
+      "id": 4,
+      "day": 0,
+      "period": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": 5,
+      "day": 0,
+      "period": 5,
+      "start": "13:00",
+      "end": "14:00"
+    },
+    {
+      "id": 6,
+      "day": 0,
+      "period": 6,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "id": 7,
+      "day": 0,
+      "period": 7,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "id": 8,
+      "day": 0,
+      "period": 8,
+      "start": "16:00",
+      "end": "17:00"
+    },
+    {
+      "id": 9,
+      "day": 0,
+      "period": 9,
+      "start": "17:00",
+      "end": "18:00"
+    },
+    {
+      "id": 10,
+      "day": 1,
+      "period": 0,
+      "start": "08:00",
+      "end": "09:00"
+    },
+    {
+      "id": 11,
+      "day": 1,
+      "period": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "id": 12,
+      "day": 1,
+      "period": 2,
+      "start": "10:00",
+      "end": "11:00"
+    },
+    {
+      "id": 13,
+      "day": 1,
+      "period": 3,
+      "start": "11:00",
+      "end": "12:00"
+    },
+    {
+      "id": 14,
+      "day": 1,
+      "period": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": 15,
+      "day": 1,
+      "period": 5,
+      "start": "13:00",
+      "end": "14:00"
+    },
+    {
+      "id": 16,
+      "day": 1,
+      "period": 6,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "id": 17,
+      "day": 1,
+      "period": 7,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "id": 18,
+      "day": 1,
+      "period": 8,
+      "start": "16:00",
+      "end": "17:00"
+    },
+    {
+      "id": 19,
+      "day": 1,
+      "period": 9,
+      "start": "17:00",
+      "end": "18:00"
+    },
+    {
+      "id": 20,
+      "day": 2,
+      "period": 0,
+      "start": "08:00",
+      "end": "09:00"
+    },
+    {
+      "id": 21,
+      "day": 2,
+      "period": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "id": 22,
+      "day": 2,
+      "period": 2,
+      "start": "10:00",
+      "end": "11:00"
+    },
+    {
+      "id": 23,
+      "day": 2,
+      "period": 3,
+      "start": "11:00",
+      "end": "12:00"
+    },
+    {
+      "id": 24,
+      "day": 2,
+      "period": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": 25,
+      "day": 2,
+      "period": 5,
+      "start": "13:00",
+      "end": "14:00"
+    },
+    {
+      "id": 26,
+      "day": 2,
+      "period": 6,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "id": 27,
+      "day": 2,
+      "period": 7,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "id": 28,
+      "day": 2,
+      "period": 8,
+      "start": "16:00",
+      "end": "17:00"
+    },
+    {
+      "id": 29,
+      "day": 2,
+      "period": 9,
+      "start": "17:00",
+      "end": "18:00"
+    },
+    {
+      "id": 30,
+      "day": 3,
+      "period": 0,
+      "start": "08:00",
+      "end": "09:00"
+    },
+    {
+      "id": 31,
+      "day": 3,
+      "period": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "id": 32,
+      "day": 3,
+      "period": 2,
+      "start": "10:00",
+      "end": "11:00"
+    },
+    {
+      "id": 33,
+      "day": 3,
+      "period": 3,
+      "start": "11:00",
+      "end": "12:00"
+    },
+    {
+      "id": 34,
+      "day": 3,
+      "period": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": 35,
+      "day": 3,
+      "period": 5,
+      "start": "13:00",
+      "end": "14:00"
+    },
+    {
+      "id": 36,
+      "day": 3,
+      "period": 6,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "id": 37,
+      "day": 3,
+      "period": 7,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "id": 38,
+      "day": 3,
+      "period": 8,
+      "start": "16:00",
+      "end": "17:00"
+    },
+    {
+      "id": 39,
+      "day": 3,
+      "period": 9,
+      "start": "17:00",
+      "end": "18:00"
+    },
+    {
+      "id": 40,
+      "day": 4,
+      "period": 0,
+      "start": "08:00",
+      "end": "09:00"
+    },
+    {
+      "id": 41,
+      "day": 4,
+      "period": 1,
+      "start": "09:00",
+      "end": "10:00"
+    },
+    {
+      "id": 42,
+      "day": 4,
+      "period": 2,
+      "start": "10:00",
+      "end": "11:00"
+    },
+    {
+      "id": 43,
+      "day": 4,
+      "period": 3,
+      "start": "11:00",
+      "end": "12:00"
+    },
+    {
+      "id": 44,
+      "day": 4,
+      "period": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": 45,
+      "day": 4,
+      "period": 5,
+      "start": "13:00",
+      "end": "14:00"
+    },
+    {
+      "id": 46,
+      "day": 4,
+      "period": 6,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "id": 47,
+      "day": 4,
+      "period": 7,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "id": 48,
+      "day": 4,
+      "period": 8,
+      "start": "16:00",
+      "end": "17:00"
+    },
+    {
+      "id": 49,
+      "day": 4,
+      "period": 9,
+      "start": "17:00",
+      "end": "18:00"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "CR51",
+      "name": "Classroom 51 (5th Floor, CSE-DS Dept)",
+      "capacity": 70,
+      "room_type": "classroom"
+    },
+    {
+      "id": "CR52",
+      "name": "Classroom 52 (5th Floor, CSE-DS Dept)",
+      "capacity": 70,
+      "room_type": "classroom"
+    },
+    {
+      "id": "CR53",
+      "name": "Classroom 53 (5th Floor, CSE-DS Dept)",
+      "capacity": 70,
+      "room_type": "classroom"
+    },
+    {
+      "id": "L1",
+      "name": "Data Analytics Lab (5th Floor, CSE-DS Dept)",
+      "capacity": 35,
+      "room_type": "lab"
+    },
+    {
+      "id": "L2",
+      "name": "Machine Learning Lab (5th Floor, CSE-DS Dept)",
+      "capacity": 35,
+      "room_type": "lab"
+    },
+    {
+      "id": "L3",
+      "name": "Computer Vision Lab (5th Floor, CSE-DS Dept)",
+      "capacity": 35,
+      "room_type": "lab"
+    },
+    {
+      "id": "L4",
+      "name": "High Performance Computing Lab (5th Floor, CSE-DS Dept)",
+      "capacity": 35,
+      "room_type": "lab"
+    }
+  ],
+  "faculty": [
+    {
+      "id": "RP",
+      "name": "Ruchika Patil"
+    },
+    {
+      "id": "TC",
+      "name": "Trupti Chandak (Visiting Faculty)"
+    },
+    {
+      "id": "SM",
+      "name": "Dr. Shruti Mathur"
+    },
+    {
+      "id": "RK",
+      "name": "Rupali Karande"
+    },
+    {
+      "id": "PJ",
+      "name": "Dr. Poonam Jadhav"
+    },
+    {
+      "id": "MN",
+      "name": "Michael Nadar"
+    },
+    {
+      "id": "AS",
+      "name": "Adil Shaikh"
+    },
+    {
+      "id": "PT",
+      "name": "Pradeep Talwelkar"
+    },
+    {
+      "id": "SR",
+      "name": "Sunita Ram (Visiting Faculty)"
+    },
+    {
+      "id": "SAM",
+      "name": "Samiran Maity"
+    },
+    {
+      "id": "PSJ",
+      "name": "Pradnya Joshi"
+    },
+    {
+      "id": "SF",
+      "name": "Sonal Foss (Visiting Faculty)"
+    }
+  ],
+  "courses": [
+    {
+      "code": "CSF",
+      "title": "Computer System Fundamentals",
+      "credits": 3,
+      "category": "Major",
+      "theory_sessions_per_week": 3,
+      "practical_sessions_per_week": 1
+    },
+    {
+      "code": "DBS",
+      "title": "Database Systems",
+      "credits": 3,
+      "category": "Major",
+      "theory_sessions_per_week": 3,
+      "practical_sessions_per_week": 1,
+      "is_heavy": true
+    },
+    {
+      "code": "DSL",
+      "title": "Data Science Laboratory (Python)",
+      "credits": 2,
+      "category": "Skill-Based",
+      "theory_sessions_per_week": 1,
+      "practical_sessions_per_week": 1
+    },
+    {
+      "code": "MIS",
+      "title": "Mathematics for Intelligent Systems",
+      "credits": 3,
+      "category": "Major",
+      "theory_sessions_per_week": 4
+    },
+    {
+      "code": "DT",
+      "title": "Design Thinking Laboratory",
+      "credits": 1,
+      "category": "Skill-Based",
+      "practical_sessions_per_week": 1
+    },
+    {
+      "code": "UHV",
+      "title": "Universal Human Values",
+      "credits": 2,
+      "category": "Ability-Enhancement",
+      "theory_sessions_per_week": 3,
+      "tutorial_sessions_per_week": 1
+    },
+    {
+      "code": "PAIE",
+      "title": "Python for AI Engineering",
+      "credits": 1,
+      "category": "Value-Added",
+      "theory_sessions_per_week": 2
+    },
+    {
+      "code": "FMRA",
+      "title": "Financial Market and Risk Analysis",
+      "credits": 2,
+      "category": "Minor",
+      "theory_sessions_per_week": 3
+    },
+    {
+      "code": "OE",
+      "title": "Open Elective",
+      "credits": 2,
+      "category": "Open-Elective",
+      "theory_sessions_per_week": 4
+    }
+  ],
+  "divisions": [
+    {
+      "id": "D1",
+      "program": "FYUP",
+      "semester": 3,
+      "student_count": 70,
+      "batches": [
+        "D11",
+        "D12"
+      ],
+      "course_codes": [
+        "CSF",
+        "DBS",
+        "DSL",
+        "MIS",
+        "DT",
+        "UHV",
+        "PAIE",
+        "FMRA",
+        "OE"
+      ],
+      "faculty_by_course": {
+        "CSF": [
+          "RP",
+          "TC"
+        ],
+        "DBS": [
+          "SM",
+          "RK"
+        ],
+        "DSL": [
+          "PJ",
+          "MN"
+        ],
+        "MIS": "AS",
+        "DT": [
+          "PT",
+          "SR"
+        ],
+        "UHV": "SAM",
+        "PAIE": "PSJ",
+        "FMRA": "SF",
+        "OE": "TC"
+      }
+    },
+    {
+      "id": "D2",
+      "program": "FYUP",
+      "semester": 3,
+      "student_count": 70,
+      "batches": [
+        "D21",
+        "D22"
+      ],
+      "course_codes": [
+        "CSF",
+        "DBS",
+        "DSL",
+        "MIS",
+        "DT",
+        "UHV",
+        "PAIE",
+        "FMRA",
+        "OE"
+      ],
+      "faculty_by_course": {
+        "CSF": [
+          "RK",
+          "MN"
+        ],
+        "DBS": [
+          "PT",
+          "SR"
+        ],
+        "DSL": [
+          "PSJ",
+          "PJ"
+        ],
+        "MIS": "SF",
+        "DT": [
+          "AS",
+          "SAM"
+        ],
+        "UHV": "RP",
+        "PAIE": "SM",
+        "FMRA": "TC",
+        "OE": "MN"
+      }
+    },
+    {
+      "id": "D3",
+      "program": "FYUP",
+      "semester": 3,
+      "student_count": 70,
+      "batches": [
+        "D31",
+        "D32"
+      ],
+      "course_codes": [
+        "CSF",
+        "DBS",
+        "DSL",
+        "MIS",
+        "DT",
+        "UHV",
+        "PAIE",
+        "FMRA",
+        "OE"
+      ],
+      "faculty_by_course": {
+        "CSF": [
+          "SR",
+          "PJ"
+        ],
+        "DBS": [
+          "PSJ",
+          "AS"
+        ],
+        "DSL": [
+          "SAM",
+          "SM"
+        ],
+        "MIS": "RK",
+        "DT": [
+          "PT",
+          "SF"
+        ],
+        "UHV": "MN",
+        "PAIE": "RP",
+        "FMRA": "TC",
+        "OE": "PJ"
+      }
+    }
+  ]
+}
