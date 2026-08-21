@@ -129,20 +129,52 @@ inline in the JSON files' `_transcription_note` fields):
    Science"; BTech-D2: "Geospatial Data Science") — likely a source-document inconsistency.
 2. Division D3's class/semester header wasn't in the photo (see table above).
 
-## 5. Still open (Phases B/C from the approved plan, not started yet)
+## 5. Phase B — done: generic Pareto sweep + branch selector + individual-solver UI
 
-- **Phase B — generic Pareto sweep in the webapp.** The generic engine's CP-SAT builder already
-  has `solve_pareto_point()` (AUGMECON2 epsilon-constraint, 4 categories: rooms/labs/students/
-  faculty) and a standalone sweep driver (`research/pareto_sweep.py`) — neither is wired into the
-  webapp API yet. Plan: extract the sweep logic into `engine/pareto_sweep.py`, add
-  `webapp/routers/pareto.py` (`POST /api/pareto`, background job, new `ParetoRun` table), and a
-  dashboard panel. The existing bespoke `pareto.py` (SY-only, 3-axis, full-timetable-per-point)
-  stays as-is at its current endpoint — additive, not a replacement.
-- **Phase C — real timetable-image OCR.** `webapp/extract_calendar.py` already has the proven
-  pattern (Claude-vision call + JSON schema, gated on `ANTHROPIC_API_KEY`, drafts land unconfirmed
-  for human review). Plan: `webapp/extract_timetable.py` on the same pattern, new
-  `TimetableUpload`/`TimetableDraftRow` tables, `webapp/routers/timetable_ocr.py` with a confirm
-  step that fans out into `Branch`/`Division`/`Course`/`Faculty`/`Allocation` (unlike the calendar
-  module's confirm, which just flips one boolean). §4 above is what this *automates* once built —
-  this session did it by hand instead, which is what "for now I'll send you the timetables and you
-  OCR it yourself" asked for.
+Built and committed (`01c6063`):
+- `engine/pareto_sweep.py` — pure `sweep()`/`sweep_pair()` functions reusing
+  `CPSATSolver.solve_pareto_point()` (AUGMECON2 epsilon-constraint), no CSV/plotting side effects.
+- `webapp/routers/pareto.py` — `POST /api/pareto` (background job via `ParetoRun` table, mirrors
+  `TimetableRun`'s queued→running→done/failed pattern), `GET /api/pareto/{id}`,
+  `GET /api/pareto/runs`. Deliberately not `GET /api/pareto` bare — that path is the existing
+  bespoke SY-only 3-axis endpoint served directly from `server.py`; kept untouched and separate.
+- `platform.html`/`platform.js` — a Pareto panel (pair checkboxes, time budget, poll, results table
+  + inline-SVG frontier scatter, no chart library).
+
+**Two real bugs surfaced by end-to-end testing, both fixed:**
+
+1. **No branch selector existed anywhere in the UI.** Every Generate/Compare/Pareto request
+   implicitly solved `branch_ids=None` (whole institution), which only ever "worked" by accident
+   when exactly one branch existed. Once TY/BTech were seeded alongside SY, the shared division
+   names (`D1`/`D2`/`D3` across all three) collide in a whole-institution solve — confirmed live:
+   `GET /api/readiness` in that state returns `ready:false` naming all three collisions, while
+   `GET /api/readiness?branch_ids=2` (TY alone) returns `ready:true`. Added a real branch
+   multi-select to `platform.html`, threaded through readiness/generate/compare/pareto payloads,
+   defaulting to "all branches" on load (so a freshly-seeded dataset isn't silently excluded) but
+   narrowable to one. **This was the actual fix for "it is still SY only."**
+2. **MIP and GA were hidden from the UI.** The backend has always supported all four solvers
+   individually (`engine.solvers.SOLVERS = {greedy, mip, ga, cpsat}`, `POST /api/runs` and
+   `POST /api/compare` both already accepted any of them) — only the dropdown/checkboxes in
+   `platform.html` restricted the choice to greedy/cpsat/pipeline. That restriction was the
+   *source* `timetable` project's own deliberate call ("benchmark narrative, not end-user
+   choices" — CLAUDE.md §6); it directly contradicts this project's founding goal (individual
+   Greedy/MIP/GA/CP-SAT comparison), so it was removed. `pipeline.py` is a separate, additional
+   4-stage hybrid (Greedy→MIP→GA→CP-SAT chained together) — not a replacement for using any of
+   the four on their own, which remains fully available.
+
+Live-verified against a running server (not just unit tests): seeded all 3 branches, bootstrapped
+a faculty login, confirmed per-branch readiness is clean while whole-institution readiness
+correctly reports the collision, and ran a branch-scoped `POST /api/runs` (greedy, TY branch)
+that produced a distinctly different result from SY — proving the selector changes what's actually
+solved, not just what's displayed.
+
+## 6. Phase C — not started
+
+Real timetable-image OCR automation. `webapp/extract_calendar.py` already has the proven pattern
+(Claude-vision call + JSON schema, gated on `ANTHROPIC_API_KEY`, drafts land unconfirmed for human
+review). Plan: `webapp/extract_timetable.py` on the same pattern, new
+`TimetableUpload`/`TimetableDraftRow` tables, `webapp/routers/timetable_ocr.py` with a confirm
+step that fans out into `Branch`/`Division`/`Course`/`Faculty`/`Allocation` (unlike the calendar
+module's confirm, which just flips one boolean). §4 above is what this *automates* once built —
+this session did it by hand instead (manually reading the photographed timetables), which is what
+"for now I'll send you the timetables and you OCR it yourself" asked for.
