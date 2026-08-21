@@ -1,0 +1,23 @@
+# --- solver engine (bespoke SY-reference pipeline + ported generic engine) ---
+ortools>=9.9            # MIP (CBC) + CP-SAT backends
+pandas>=2.0              # export tables / benchmark CSV
+openpyxl>=3.1             # .xlsx export
+fpdf2>=2.7               # .pdf export
+
+# --- web platform ---
+fastapi>=0.111
+uvicorn>=0.30            # ASGI server (port 8750; 8000 is OS-reserved on this box)
+python-multipart>=0.0.9  # multipart parsing for calendar/timetable-image upload
+sqlmodel>=0.0.16         # SQLite persistence (SQLAlchemy+Pydantic)
+
+# --- calendar / timetable-image ingestion ---
+pillow>=10.0             # validate/downscale uploaded jpg/png
+pypdf>=4.0                # validate PDFs, page count, free text-layer extraction
+anthropic>=0.40          # optional: Claude-vision extraction; features hide without ANTHROPIC_API_KEY
+
+# --- tests ---
+pytest>=8.0
+httpx>=0.27              # required by fastapi.testclient for API endpoint tests
+
+# --- research (pareto sweep plotting only) ---
+matplotlib>=3.8

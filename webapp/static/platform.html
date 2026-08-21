@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ Sanghvi Timetable Platform</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  /* Compare-solvers panel (kept local to this page per the theme-migration freeze on style.css;
+     reuses existing classes/vars — .panel-section, .controls, .control, .tab, .tt, .stat-val,
+     .status-line, .notes — so the pending theme rewrite applies here automatically). */
+  .compare-checks { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  .compare-checks label {
+    display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px;
+    cursor: pointer; color: var(--text);
+  }
+  #compareBtn {
+    padding: 11px 22px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 14px; font-weight: 700; color: var(--bg);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  }
+  #compareBtn:disabled { opacity: .5; cursor: not-allowed; }
+  .compare-badge {
+    display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .3px;
+    background: transparent; border: 1px solid var(--good); color: var(--good);
+  }
+  tr.compare-winner td:first-child { border-left: 3px solid var(--good); padding-left: 7px; }
+  #compareResultWrap { margin-top: 16px; }
+  #compareDivTabs { margin-top: -6px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">TT</div>
+    <div>
+      <h1>DJ Sanghvi Timetable Platform</h1>
+      <p class="sub">Database-backed generate &middot; SIH 25091</p>
+    </div>
+  </div>
+  <div class="dataset-label">
+    <a class="export-link" href="/dashboard">&larr; Edit data (faculty, subjects&hellip;)</a>
+    <span id="topLabel"></span>
+  </div>
+</header>
+<nav class="navbar">
+  <a href="/dashboard">Dashboard</a>
+  <a href="/platform" class="active">Platform</a>
+  <a href="/my-timetable">My Timetable</a>
+  <a href="/guideline">NEP Guideline</a>
+  <div class="nav-user">
+    <span id="navName"></span>
+    <button type="button" id="logoutBtn">Log out</button>
+  </div>
+</nav>
+
+<main>
+
+  <section class="panel-section" id="seedSection">
+    <h2>1. Starter data</h2>
+    <p class="notes">Each dataset loads as its own branch (one year/program-term) — faculty, rooms,
+      and the weekly slot grid are shared across every branch; loading a second or third dataset
+      adds to what's already there instead of replacing it.</p>
+    <div class="controls">
+      <div class="control">
+        <label>Dataset</label>
+        <select id="seedDataset"></select>
+      </div>
+      <button id="seedBtn">Load dataset</button>
+    </div>
+    <div class="status-line" id="seedStatus">checking available datasets…</div>
+  </section>
+
+  <section class="panel-section" id="branchSection">
+    <h2>2. Branch (year/program)</h2>
+    <p class="notes">Pick which branch(es) to generate/compare/sweep against. Leave none selected
+      to include the whole institution — only safe if every included branch uses distinct division
+      names (the readiness banner below will say so if not).</p>
+    <div class="control-row">
+      <select id="branchSelect" multiple size="4" style="min-width:280px"></select>
+      <button type="button" id="branchRefreshBtn" class="secondary">Refresh</button>
+    </div>
+  </section>
+
+  <section class="panel-section" id="readySection">
+    <h2>3. Readiness</h2>
+    <div class="readiness-banner" id="readyBanner">checking…</div>
+  </section>
+
+  <section class="panel-section" id="genSection">
+    <h2>4. Generate</h2>
+    <div class="controls">
+      <div class="control">
+        <label>Solver</label>
+        <select id="solver">
+          <option value="greedy">Greedy — instant</option>
+          <option value="mip">MIP — exact, medium speed</option>
+          <option value="ga">GA — heuristic, medium speed</option>
+          <option value="cpsat">CP-SAT — best quality, slower</option>
+          <option value="pipeline">Hybrid pipeline (Greedy&rarr;MIP&rarr;GA&rarr;CP-SAT) — slowest</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Time limit (s)</label>
+        <input type="number" id="timeLimit" value="30" min="2" max="600" step="5">
+      </div>
+      <button id="generateBtn">Generate</button>
+    </div>
+    <p class="notes" id="genNote">cpsat / pipeline can take significantly longer than greedy.</p>
+    <div class="status-line" id="genStatus"></div>
+  </section>
+
+  <section class="panel-section" id="resultSection">
+    <h2>5. Result</h2>
+    <div class="summary" id="summary" style="display:none">
+      <div class="stat"><span class="stat-val" id="statSolver">—</span><span class="stat-lbl">solver</span></div>
+      <div class="stat"><span class="stat-val" id="statStatus">—</span><span class="stat-lbl">status</span></div>
+      <div class="stat"><span class="stat-val" id="statHard">—</span><span class="stat-lbl">hard violations</span></div>
+      <div class="stat"><span class="stat-val" id="statSoft">—</span><span class="stat-lbl">soft cost</span></div>
+      <div class="stat"><span class="stat-val" id="statWall">—</span><span class="stat-lbl">wall clock</span></div>
+    </div>
+
+    <div class="stages" id="stagesWrap" style="display:none">
+      <h2>Hybrid pipeline stages</h2>
+      <div class="stage-track" id="stageTrack"></div>
+    </div>
+
+    <div class="export-row" id="exportRow" style="display:none">
+      <a id="exportXlsx" class="export-link" href="#" target="_blank" rel="noopener">Export Excel (.xlsx)</a>
+      <a id="exportPdf" class="export-link" href="#" target="_blank" rel="noopener">Export PDF</a>
+    </div>
+
+    <section class="tabs" id="tabs" style="display:none"></section>
+    <section id="gridArea"></section>
+
+    <section class="legend" id="legend" style="display:none">
+      <span class="legend-item"><span class="chip theory"></span> Theory</span>
+      <span class="legend-item"><span class="chip lab"></span> Lab (2h, batch-split)</span>
+      <span class="legend-item"><span class="chip tut"></span> Tutorial</span>
+      <span class="legend-item"><span class="chip brk"></span> Break</span>
+    </section>
+  </section>
+
+  <section class="panel-section" id="compareSection">
+    <h2>6. Compare solvers</h2>
+    <p class="notes" id="compareNote">
+      Runs the selected solvers back-to-back against the current data and compares them
+      head-to-head. This is one synchronous request — it does not create a run in the history
+      table below and has no export links; cpsat/pipeline can each take 20&ndash;60s, so comparing
+      all three can take a few minutes.
+    </p>
+    <div class="controls">
+      <div class="control">
+        <label>Solvers (pick at least 2)</label>
+        <div class="compare-checks">
+          <label><input type="checkbox" id="cmpGreedy" checked> Greedy</label>
+          <label><input type="checkbox" id="cmpMip" checked> MIP</label>
+          <label><input type="checkbox" id="cmpGa" checked> GA</label>
+          <label><input type="checkbox" id="cmpCpsat" checked> CP-SAT</label>
+          <label><input type="checkbox" id="cmpPipeline"> Hybrid pipeline</label>
+        </div>
+      </div>
+      <div class="control">
+        <label>Time limit (s)</label>
+        <input type="number" id="compareTimeLimit" value="20" min="2" max="600" step="5">
+      </div>
+      <button id="compareBtn">Run comparison</button>
+    </div>
+    <div class="status-line" id="compareStatus"></div>
+
+    <div id="compareResultWrap" style="display:none">
+      <table class="tt history-table" id="compareTable">
+        <thead>
+          <tr><th>Solver</th><th>Status</th><th>Hard violations</th><th>Soft cost</th><th>Wall clock (s)</th></tr>
+        </thead>
+        <tbody id="compareTableBody"></tbody>
+      </table>
+      <p class="notes">Lower soft cost is better. Hard violations dominate: any result with hard
+        violations above zero ranks below one with zero, regardless of soft cost.</p>
+
+      <section class="tabs" id="compareTabs"></section>
+      <section class="tabs" id="compareDivTabs"></section>
+      <section id="compareGridArea"></section>
+    </div>
+  </section>
+
+  <section class="panel-section" id="paretoSection">
+    <h2>7. Pareto trade-off sweep</h2>
+    <p class="notes">
+      Traces the actual trade-off frontier between competing objectives (faculty day-load balance,
+      student idle-gap/day-span cost, late-lab-slot placement) using an epsilon-constraint sweep on
+      the CP-SAT model — reveals trade-offs a single scalarized soft-cost number hides. Each pair
+      does several CP-SAT solves, so this runs as a background job like Generate above; a full
+      3-pair sweep at the defaults can take several minutes.
+    </p>
+    <div class="controls">
+      <div class="control">
+        <label>Objective pairs</label>
+        <div class="compare-checks">
+          <label><input type="checkbox" id="parFacStu" checked> faculty vs students</label>
+          <label><input type="checkbox" id="parFacLab" checked> faculty vs labs</label>
+          <label><input type="checkbox" id="parStuLab" checked> students vs labs</label>
+        </div>
+      </div>
+      <div class="control">
+        <label>Time limit per point (s)</label>
+        <input type="number" id="parTimeLimit" value="45" min="15" max="300" step="5">
+      </div>
+      <div class="control">
+        <label>Points per pair</label>
+        <input type="number" id="parSweepPoints" value="5" min="3" max="9" step="1">
+      </div>
+      <button id="paretoBtn">Run sweep</button>
+    </div>
+    <div class="status-line" id="paretoStatus"></div>
+    <div id="paretoResultWrap" style="display:none"></div>
+  </section>
+
+  <section class="panel-section" id="adjustSection" style="display:none">
+    <h2>8. Holiday / rain adjustment</h2>
+    <p class="notes">Adjust the current timetable (run <span id="adjustRunId">—</span>) for a sudden holiday or
+      rain. The blocked window is closed off and the <b>whole week is re-solved</b> around it, warm-started from
+      the current timetable — so a rained-out session is rescheduled elsewhere in the week rather than dropped.
+      Most unaffected sessions stay put, but that is a tendency, not a guarantee. The stored run is never changed.</p>
+    <div class="controls">
+      <div class="control">
+        <label>Day</label>
+        <select id="adjDay">
+          <option value="0">Monday</option>
+          <option value="1">Tuesday</option>
+          <option value="2">Wednesday</option>
+          <option value="3">Thursday</option>
+          <option value="4">Friday</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Scope</label>
+        <select id="adjScope">
+          <option value="whole">Whole day (holiday)</option>
+          <option value="from">Rain — from period…</option>
+        </select>
+      </div>
+      <div class="control" id="adjFromWrap" style="display:none">
+        <label>From period (0-based)</label>
+        <input type="number" id="adjFrom" value="5" min="1" max="12" step="1">
+      </div>
+      <div class="control">
+        <label>Solver</label>
+        <select id="adjSolver">
+          <option value="cpsat">CP-SAT (best quality)</option>
+          <option value="pipeline">Hybrid pipeline</option>
+          <option value="greedy">Greedy (fast preview)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label>Time budget (s)</label>
+        <input type="number" id="adjTimeLimit" value="60" min="5" max="600" step="5">
+      </div>
+      <button id="adjustBtn">Apply adjustment</button>
+      <button id="restoreBtn" class="secondary" style="display:none">Restore original</button>
+    </div>
+    <div class="control-row" id="adjRelaxWrap">
+      <label>Also relax these days
+        <span class="notes">— exempts a day from the 6–8h load / labs-every-day / one-break rules so
+          displaced sessions have somewhere legal to land. Use when a whole-day holiday reports unplaced
+          sessions.</span>
+      </label>
+      <div class="compare-checks" id="adjRelaxDays">
+        <label><input type="checkbox" value="0"> Mon</label>
+        <label><input type="checkbox" value="1"> Tue</label>
+        <label><input type="checkbox" value="2"> Wed</label>
+        <label><input type="checkbox" value="3"> Thu</label>
+        <label><input type="checkbox" value="4"> Fri</label>
+      </div>
+    </div>
+    <div class="status-line" id="adjStatus"></div>
+    <div class="readiness-banner not-ready" id="adjUnplaced" style="display:none"></div>
+  </section>
+
+  <section class="panel-section" id="historySection">
+    <h2>9. History</h2>
+    <table class="tt history-table" id="historyTable">
+      <thead>
+        <tr><th>ID</th><th>Label</th><th>Solver</th><th>Status</th><th>Hard</th><th>Soft</th><th>Created</th></tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="/static/platform.js"></script>
+</body>
+</html>

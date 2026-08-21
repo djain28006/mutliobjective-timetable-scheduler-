@@ -1,0 +1,117 @@
+{
+  "_transcription_note": "Transcribed by reading the photographed DJSCE CSE-DS BTech (D2) Sem VII timetable directly (manual read, term July-December 2026). Structural reference, not a verbatim cell-by-cell reproduction (same methodology as djsce_cse_ds_sy_sem4.json). The companion 'BTech (D1)' sheet for this same term was intentionally excluded from seeding -- it was almost entirely blank (only 2 subjects, a few hours/week), consistent with Final Year D1 being largely on OJT (On-the-Job Training) this term rather than following a normal timetable. Some weekly counts are best-effort given dense merged cells; verify before treating as authoritative.",
+  "institution": "Dwarkadas J. Sanghvi College of Engineering (DJSCE), Dept. of CSE (Data Science)",
+  "class_term": "BTech (Final Year), Semester VII, Divisions D2/D3, academic term July-December 2026 (D3 faculty placeholder-copied from D2's photographed timetable -- only D2 was photographed; divisions share the same subject list per class, confirmed by the user. Division D1 intentionally excluded: its own photographed timetable is genuinely different this term -- almost entirely blank, ~2 subjects/2 hours-a-week -- consistent with Final Year D1 being largely on OJT, not merely un-photographed data.)",
+  "days_per_week": 5,
+  "protected_notes": [
+    "Friday afternoon is largely reserved for Final Project / Research Work.",
+    "Saturday is reserved for Remedial lectures, Hackathons/student-chapter events, and guest lectures (not part of the optimized Mon-Fri grid)."
+  ],
+  "time_slots": [
+    {"id": 0, "day": 0, "period": 0, "start": "08:00", "end": "09:00"},
+    {"id": 1, "day": 0, "period": 1, "start": "09:00", "end": "10:00"},
+    {"id": 2, "day": 0, "period": 2, "start": "10:00", "end": "11:00"},
+    {"id": 3, "day": 0, "period": 3, "start": "11:00", "end": "12:00"},
+    {"id": 4, "day": 0, "period": 4, "start": "12:00", "end": "13:00"},
+    {"id": 5, "day": 0, "period": 5, "start": "13:00", "end": "14:00"},
+    {"id": 6, "day": 0, "period": 6, "start": "14:00", "end": "15:00"},
+    {"id": 7, "day": 0, "period": 7, "start": "15:00", "end": "16:00"},
+    {"id": 8, "day": 0, "period": 8, "start": "16:00", "end": "17:00"},
+    {"id": 9, "day": 0, "period": 9, "start": "17:00", "end": "18:00"},
+    {"id": 10, "day": 1, "period": 0, "start": "08:00", "end": "09:00"},
+    {"id": 11, "day": 1, "period": 1, "start": "09:00", "end": "10:00"},
+    {"id": 12, "day": 1, "period": 2, "start": "10:00", "end": "11:00"},
+    {"id": 13, "day": 1, "period": 3, "start": "11:00", "end": "12:00"},
+    {"id": 14, "day": 1, "period": 4, "start": "12:00", "end": "13:00"},
+    {"id": 15, "day": 1, "period": 5, "start": "13:00", "end": "14:00"},
+    {"id": 16, "day": 1, "period": 6, "start": "14:00", "end": "15:00"},
+    {"id": 17, "day": 1, "period": 7, "start": "15:00", "end": "16:00"},
+    {"id": 18, "day": 1, "period": 8, "start": "16:00", "end": "17:00"},
+    {"id": 19, "day": 1, "period": 9, "start": "17:00", "end": "18:00"},
+    {"id": 20, "day": 2, "period": 0, "start": "08:00", "end": "09:00"},
+    {"id": 21, "day": 2, "period": 1, "start": "09:00", "end": "10:00"},
+    {"id": 22, "day": 2, "period": 2, "start": "10:00", "end": "11:00"},
+    {"id": 23, "day": 2, "period": 3, "start": "11:00", "end": "12:00"},
+    {"id": 24, "day": 2, "period": 4, "start": "12:00", "end": "13:00"},
+    {"id": 25, "day": 2, "period": 5, "start": "13:00", "end": "14:00"},
+    {"id": 26, "day": 2, "period": 6, "start": "14:00", "end": "15:00"},
+    {"id": 27, "day": 2, "period": 7, "start": "15:00", "end": "16:00"},
+    {"id": 28, "day": 2, "period": 8, "start": "16:00", "end": "17:00"},
+    {"id": 29, "day": 2, "period": 9, "start": "17:00", "end": "18:00"},
+    {"id": 30, "day": 3, "period": 0, "start": "08:00", "end": "09:00"},
+    {"id": 31, "day": 3, "period": 1, "start": "09:00", "end": "10:00"},
+    {"id": 32, "day": 3, "period": 2, "start": "10:00", "end": "11:00"},
+    {"id": 33, "day": 3, "period": 3, "start": "11:00", "end": "12:00"},
+    {"id": 34, "day": 3, "period": 4, "start": "12:00", "end": "13:00"},
+    {"id": 35, "day": 3, "period": 5, "start": "13:00", "end": "14:00"},
+    {"id": 36, "day": 3, "period": 6, "start": "14:00", "end": "15:00"},
+    {"id": 37, "day": 3, "period": 7, "start": "15:00", "end": "16:00"},
+    {"id": 38, "day": 3, "period": 8, "start": "16:00", "end": "17:00"},
+    {"id": 39, "day": 3, "period": 9, "start": "17:00", "end": "18:00"},
+    {"id": 40, "day": 4, "period": 0, "start": "08:00", "end": "09:00"},
+    {"id": 41, "day": 4, "period": 1, "start": "09:00", "end": "10:00"},
+    {"id": 42, "day": 4, "period": 2, "start": "10:00", "end": "11:00"},
+    {"id": 43, "day": 4, "period": 3, "start": "11:00", "end": "12:00"},
+    {"id": 44, "day": 4, "period": 4, "start": "12:00", "end": "13:00"},
+    {"id": 45, "day": 4, "period": 5, "start": "13:00", "end": "14:00"},
+    {"id": 46, "day": 4, "period": 6, "start": "14:00", "end": "15:00"},
+    {"id": 47, "day": 4, "period": 7, "start": "15:00", "end": "16:00"},
+    {"id": 48, "day": 4, "period": 8, "start": "16:00", "end": "17:00"},
+    {"id": 49, "day": 4, "period": 9, "start": "17:00", "end": "18:00"}
+  ],
+  "rooms": [
+    {"id": "CR51", "name": "Classroom 51 (5th Floor, CSE-DS Dept)", "capacity": 70, "room_type": "classroom"},
+    {"id": "CR52", "name": "Classroom 52 (5th Floor, CSE-DS Dept)", "capacity": 70, "room_type": "classroom"},
+    {"id": "CR53", "name": "Classroom 53 (5th Floor, CSE-DS Dept)", "capacity": 70, "room_type": "classroom"},
+    {"id": "CR54", "name": "Classroom 54 (5th Floor, CSE-DS Dept)", "capacity": 70, "room_type": "classroom"},
+    {"id": "CR55", "name": "Classroom 55 (5th Floor, EXTC Dept)", "capacity": 70, "room_type": "classroom"},
+    {"id": "L2", "name": "Machine Learning Lab (5th Floor, CSE-DS Dept)", "capacity": 35, "room_type": "lab"},
+    {"id": "L3", "name": "Natural Language Processing Lab (5th Floor, CSE-DS Dept)", "capacity": 35, "room_type": "lab"},
+    {"id": "L4", "name": "High Performance Computing Lab (5th Floor, CSE-DS Dept)", "capacity": 35, "room_type": "lab"},
+    {"id": "ICB-L1", "name": "Cyber Security Lab (4th Floor, CSE-ICB Dept)", "capacity": 35, "room_type": "lab"}
+  ],
+  "faculty": [
+    {"id": "PV", "name": "Pooja Vartak"},
+    {"id": "AR", "name": "Aditi Raut"},
+    {"id": "NM", "name": "Dr. Nilesh Marathe"},
+    {"id": "SV", "name": "Dr. Satishkumar Varma"},
+    {"id": "AS", "name": "Adil Shaikh"},
+    {"id": "MAA", "name": "Mrudul Arkadi"},
+    {"id": "GW", "name": "Govind Wakure"},
+    {"id": "PJ", "name": "Dr. Poonam Jadhav"},
+    {"id": "AP", "name": "Ashok Patade"},
+    {"id": "PP", "name": "Priya Parate"}
+  ],
+  "courses": [
+    {"code": "LRM", "title": "Language and Reasoning Models", "credits": 3, "category": "Major", "theory_sessions_per_week": 3, "practical_sessions_per_week": 1, "is_heavy": true},
+    {"code": "HPC", "title": "High Performance Computing", "credits": 3, "category": "Major", "theory_sessions_per_week": 3, "practical_sessions_per_week": 1},
+    {"code": "GDS", "title": "Geospatial Data Science", "credits": 3, "category": "Minor", "theory_sessions_per_week": 3, "practical_sessions_per_week": 1, "is_heavy": true},
+    {"code": "AML", "title": "Adversarial Machine Learning", "credits": 3, "category": "Major", "theory_sessions_per_week": 3, "practical_sessions_per_week": 1, "is_heavy": true},
+    {"code": "DE", "title": "Data Ethics", "credits": 2, "category": "Ability-Enhancement", "theory_sessions_per_week": 3, "tutorial_sessions_per_week": 1},
+    {"code": "RE", "title": "Research Ecosystem", "credits": 1, "category": "Value-Added", "tutorial_sessions_per_week": 2},
+    {"code": "GenAI", "title": "Generative AI", "credits": 2, "category": "Value-Added", "theory_sessions_per_week": 1},
+    {"code": "DMP", "title": "Disaster Management and Preparedness", "credits": 1, "category": "Ability-Enhancement", "theory_sessions_per_week": 1},
+    {"code": "FADS", "title": "Financial Analysis and Decision Science", "credits": 2, "category": "Minor", "theory_sessions_per_week": 3, "tutorial_sessions_per_week": 1}
+  ],
+  "divisions": [
+    {
+      "id": "D2", "program": "FYUP", "semester": 7, "student_count": 70,
+      "batches": ["D21", "D22"],
+      "course_codes": ["LRM", "HPC", "GDS", "AML", "DE", "RE", "GenAI", "DMP", "FADS"],
+      "faculty_by_course": {
+        "LRM": "PV", "HPC": ["NM", "AR"], "GDS": "SV", "AML": "AS", "DE": "MAA",
+        "RE": "GW", "GenAI": "PJ", "DMP": "AP", "FADS": "PP"
+      }
+    },
+    {
+      "id": "D3", "program": "FYUP", "semester": 7, "student_count": 70,
+      "batches": ["D31", "D32"],
+      "course_codes": ["LRM", "HPC", "GDS", "AML", "DE", "RE", "GenAI", "DMP", "FADS"],
+      "faculty_by_course": {
+        "LRM": "PV", "HPC": ["NM", "AR"], "GDS": "SV", "AML": "AS", "DE": "MAA",
+        "RE": "GW", "GenAI": "PJ", "DMP": "AP", "FADS": "PP"
+      },
+      "_note": "Faculty placeholder-copied from D2 (only D2's timetable photo was available) -- same subjects per class, per user confirmation. Adjust actual per-division faculty via the dashboard."
+    }
+  ]
+}
