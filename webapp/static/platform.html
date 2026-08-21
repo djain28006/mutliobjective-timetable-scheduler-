@@ -26,6 +26,15 @@
     background: transparent; border: 1px solid var(--good); color: var(--good);
   }
   tr.compare-winner td:first-child { border-left: 3px solid var(--good); padding-left: 7px; }
+  /* Branch caveat alert (Branch.notice) -- deliberately louder than .readiness-banner: this
+     flags a KNOWN GAP in what is being modelled, which a successful-looking solve would hide. */
+  .branch-alert {
+    margin-top: 14px; padding: 12px 14px; border-radius: 8px;
+    background: #fdecea; border: 1px solid #d93025; border-left: 5px solid #d93025;
+    color: #8b1a12; font-size: 13.5px; line-height: 1.55;
+  }
+  .branch-alert b { color: #b3261e; }
+  .branch-alert .alert-head { font-weight: 700; display: block; margin-bottom: 4px; }
   #compareResultWrap { margin-top: 16px; }
   #compareDivTabs { margin-top: -6px; }
 </style>
@@ -81,6 +90,10 @@
       <select id="branchSelect" multiple size="4" style="min-width:280px"></select>
       <button type="button" id="branchRefreshBtn" class="secondary">Refresh</button>
     </div>
+    <!-- Known-caveat alerts for the selected branch(es) -- Branch.notice, e.g. Sem VII's
+         missing OJT division. Rendered here (before Generate) so the caveat is read BEFORE a
+         plausible-looking timetable is produced, not discovered afterwards. -->
+    <div id="branchNotices"></div>
   </section>
 
   <section class="panel-section" id="readySection">

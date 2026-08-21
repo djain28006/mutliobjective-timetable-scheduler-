@@ -168,7 +168,33 @@ correctly reports the collision, and ran a branch-scoped `POST /api/runs` (greed
 that produced a distinctly different result from SY — proving the selector changes what's actually
 solved, not just what's displayed.
 
-## 6. Phase C — not started
+## 6. Open question: how OJT works across three divisions
+
+**Unresolved — needs an answer from the department before Sem VII output can be trusted.**
+
+The photographed BTech (D1) Sem VII sheet is almost entirely blank (~2 subjects, ~2 hours/week),
+which reads as D1 being on **OJT (On-the-Job Training)** that term rather than following a normal
+teaching schedule. D1 is therefore not modelled at all: the `CSE-DS-BTECH-SEM7` branch schedules
+only D2 and D3.
+
+What we don't know:
+- Does D1 alone go on OJT each term, or do the three divisions **rotate** through it?
+- Do OJT students still need *some* campus sessions timetabled (review meetings, project reviews,
+  a weekly seminar), or genuinely none?
+- If divisions rotate, the branch's division set changes term-to-term, which affects shared
+  faculty/room demand across the whole institution — the current Sem VII load is understated by
+  roughly a third.
+
+Until answered, any Sem VII timetable covers **two of three divisions** and its faculty/room load
+must not be read as true Final Year demand. This is surfaced in the UI rather than left in a
+comment: `Branch.notice` (fed from the dataset JSON's `branch_notice` key by `seed.py`) renders a
+red alert on `/platform` whenever that branch is selected, shown *before* Generate — a
+clean-looking timetable is exactly when an unmodelled assumption gets forgotten.
+
+The mechanism is generic, not a special case for this branch: any dataset can declare a
+`branch_notice` and it will be surfaced the same way.
+
+## 7. Phase C — not started
 
 Real timetable-image OCR automation. `webapp/extract_calendar.py` already has the proven pattern
 (Claude-vision call + JSON schema, gated on `ANTHROPIC_API_KEY`, drafts land unconfirmed for human

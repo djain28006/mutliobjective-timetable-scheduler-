@@ -33,6 +33,12 @@ class Branch(BranchBase, table=True):
     # hard rules (labs-every-day, 6-8h daily load) instead of pretending it is a teaching day,
     # which would make such a branch unsolvable. Fed to ProblemInstance.relaxed_days.
     relaxed_days: list[int] = Field(default_factory=list, sa_column=Column(JSON))
+    # Caveat surfaced prominently in the UI whenever this branch is selected -- for known gaps
+    # in the modelling that a generated timetable would otherwise hide (e.g. a division missing
+    # because it is on OJT). Empty means no caveat. Deliberately a warning banner, not a code
+    # comment: a plausible-looking timetable is exactly when an unmodelled assumption is most
+    # likely to be forgotten.
+    notice: str = ""
 
 
 class BranchCreate(BranchBase):

@@ -22,7 +22,7 @@ let compareActiveDivision = 0;     // division tab index within the active solve
 
 $("seedBtn").addEventListener("click", loadSeed);
 $("branchRefreshBtn").addEventListener("click", () => loadBranches());
-$("branchSelect").addEventListener("change", checkReadiness);
+$("branchSelect").addEventListener("change", () => { renderBranchNotices(); checkReadiness(); });
 $("generateBtn").addEventListener("click", generate);
 $("compareBtn").addEventListener("click", runCompare);
 $("adjustBtn").addEventListener("click", adjust);
@@ -74,11 +74,14 @@ async function loadSeed() {
 }
 
 // ---------------------------------------------------------------- 2. branch selection
+let branchesById = {};   // id -> branch row, so notices can be looked up on selection change
+
 async function loadBranches() {
   try {
     const res = await fetch("/api/branches");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const branches = await res.json();
+    branchesById = Object.fromEntries(branches.map((b) => [b.id, b]));
     const sel = $("branchSelect");
     const previouslySelected = new Set(getSelectedBranchIds());
     sel.innerHTML = branches
@@ -93,10 +96,36 @@ async function loadBranches() {
     if (!anyRestored) {
       [...sel.options].forEach((opt) => { opt.selected = true; });
     }
+    renderBranchNotices();
   } catch (e) {
     // branch list is best-effort UI sugar; readiness/generate already surface backend-unreachable
     // errors prominently, so stay quiet here
   }
+}
+
+// Show a red alert for every selected branch that carries a Branch.notice caveat. These flag
+// known gaps in what is modelled (e.g. Sem VII's D1 absent on OJT) -- surfaced up-front rather
+// than after a solve, because a clean-looking timetable is exactly when such a gap gets missed.
+function renderBranchNotices() {
+  const box = $("branchNotices");
+  if (!box) return;
+  const sel = $("branchSelect");
+  const chosen = [...sel.selectedOptions].map((o) => Number(o.value));
+  const withNotice = chosen.map((id) => branchesById[id]).filter((b) => b && b.notice);
+  box.innerHTML = withNotice
+    .map((b) => {
+      const [lead, ...rest] = String(b.notice).split("OPEN QUESTION:");
+      const open = rest.length ? `<br><b>Open question:</b> ${esc(rest.join("OPEN QUESTION:"))}` : "";
+      return `<div class="branch-alert">
+        <span class="alert-head">&#9888; ${esc(b.code)}</span>${esc(lead.trim())}${open}
+      </div>`;
+    })
+    .join("");
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 function getSelectedBranchIds() {
